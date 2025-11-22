@@ -27,10 +27,6 @@ async function safeFetch(path, options = {}) {
  *  PRODUCTOS
  * ========================= */
 
-/**
- * Lista de productos para el Home
- * Backend: GET /api/products -> { ok: true, items: [...] }
- */
 export async function fetchProducts() {
   const data = await safeFetch("/products");
 
@@ -41,13 +37,10 @@ export async function fetchProducts() {
   return data.items;
 }
 
-/**
- * Detalle de producto
- * (por ahora volvemos a llamar /api/products y filtramos localmente)
- */
 export async function fetchProductById(id) {
   if (!id) return null;
 
+  // Por compatibilidad con tu backend actual, reutilizamos /products
   const data = await safeFetch("/products");
   if (!data || !Array.isArray(data.items)) return null;
 
@@ -65,11 +58,6 @@ export async function fetchProductById(id) {
  *  PRECIOS
  * ========================= */
 
-/**
- * Precios por supermercado de un producto
- * Backend: GET /api/prices/by-product/:productId
- * Respuesta: { product, prices: [...] }
- */
 export async function fetchPricesByProductId(id) {
   if (!id) return [];
 
@@ -82,11 +70,6 @@ export async function fetchPricesByProductId(id) {
   return data.prices;
 }
 
-/**
- * Comparación de precios (mejor precio)
- * Backend: GET /api/prices/compare/:productId
- * Respuesta: { product, best, prices, params }
- */
 export async function fetchBestPriceComparison(id) {
   if (!id) return null;
 
@@ -106,19 +89,31 @@ export async function fetchBestPriceComparison(id) {
 /**
  * Signup
  * Backend: POST /api/auth/signup
- * Body: { name, email, password }
+ * Body: { name, last_name, email, password, phone? }
  * Devuelve: { ok, status, data, error }
- * (Puedes usarlo o seguir usando tu fetch directo en Signup.jsx;
- *  no choca con nada.)
  */
-export async function signupRequest({ name, email, password }) {
+export async function signupRequest({
+  name,
+  lastName,
+  email,
+  password,
+  phone,
+  avatarUrl,
+}) {
   const url = `${API_URL}/auth/signup`;
 
   try {
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({
+        name,
+        last_name: lastName,
+        email,
+        password,
+        phone: phone || null,
+        avatar_url: avatarUrl || null,
+      }),
     });
 
     const data = await res.json().catch(() => null);
@@ -144,15 +139,6 @@ export async function signupRequest({ name, email, password }) {
 
 /**
  * Login
- * Backend: POST /api/auth/login
- * Body: { email, password }
- *
- * IMPORTANTE:
- * Devuelve SIEMPRE un objeto con esta forma:
- *  - { ok: false, status, error }  en error
- *  - { ok: true, status, user, token } en éxito
- *
- * Esto es exactamente lo que tu Login.jsx está esperando.
  */
 export async function loginRequest({ email, password }) {
   const url = `${API_URL}/auth/login`;
@@ -164,12 +150,12 @@ export async function loginRequest({ email, password }) {
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await res.json().catch(() => null);
+    const body = await res.json().catch(() => null);
 
     if (!res.ok) {
       const errorMessage =
-        data?.error || data?.message || `HTTP ${res.status}`;
-      console.error("Login error:", res.status, data);
+        body?.error || body?.message || `HTTP ${res.status}`;
+      console.error("Login error:", res.status, body);
       return {
         ok: false,
         status: res.status,
@@ -179,17 +165,41 @@ export async function loginRequest({ email, password }) {
       };
     }
 
-    // Intentamos ser tolerantes con el formato del backend
-    const rawUser = data?.user || data?.data?.user || null;
-    const rawToken =
-      data?.token || data?.data?.token || data?.access_token || null;
+    let user = null;
+    let token = null;
+
+    if (body?.user && body?.token) {
+      user = body.user;
+      token = body.token;
+    } else if (body?.data?.user && body?.data?.token) {
+      user = body.data.user;
+      token = body.data.token;
+    } else if (body?.token && (body?.email || body?.id)) {
+      user = {
+        id: body.id ?? null,
+        email: body.email ?? email,
+        name: body.name ?? null,
+      };
+      token = body.token;
+    }
+
+    if (!user || !token) {
+      console.error("loginRequest: respuesta sin user/token", body);
+      return {
+        ok: false,
+        status: res.status,
+        error: "Respuesta inválida del servidor",
+        user: null,
+        token: null,
+      };
+    }
 
     return {
       ok: true,
       status: res.status,
-      user: rawUser,
-      token: rawToken,
       error: null,
+      user,
+      token,
     };
   } catch (err) {
     console.error("Error de red en loginRequest:", err);
@@ -199,6 +209,224 @@ export async function loginRequest({ email, password }) {
       error: "Error de conexión con el servidor",
       user: null,
       token: null,
+    };
+  }
+}
+
+/* =========================
+ *  PERFIL DE USUARIO
+ * ========================= */
+
+export async function fetchProfile(token) {
+  const url = `${API_URL}/auth/me`;
+
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const body = await res.json().catch(() => null);
+    console.log("fetchProfile /auth/me body:", body);
+
+    if (!res.ok) {
+      const errorMessage = body?.error || body?.message || `HTTP ${res.status}`;
+      return {
+        ok: false,
+        status: res.status,
+        error: errorMessage,
+        data: null,
+      };
+    }
+
+    const user = body?.user || body;
+    return {
+      ok: true,
+      status: res.status,
+      error: null,
+      data: user,
+    };
+  } catch (err) {
+    console.error("Error de red en fetchProfile:", err);
+    return {
+      ok: false,
+      status: 0,
+      error: "Error de conexión con el servidor",
+      data: null,
+    };
+  }
+}
+
+export async function updateProfile(token, payload) {
+  const url = `${API_URL}/auth/me`;
+
+  try {
+    const res = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const body = await res.json().catch(() => null);
+    console.log("updateProfile /auth/me body:", body);
+
+    if (!res.ok) {
+      const errorMessage = body?.error || body?.message || `HTTP ${res.status}`;
+      return {
+        ok: false,
+        status: res.status,
+        error: errorMessage,
+        data: null,
+      };
+    }
+
+    const user = body?.user || body;
+    return {
+      ok: true,
+      status: res.status,
+      error: null,
+      data: user,
+    };
+  } catch (err) {
+    console.error("Error de red en updateProfile:", err);
+    return {
+      ok: false,
+      status: 0,
+      error: "Error de conexión con el servidor",
+      data: null,
+    };
+  }
+}
+
+/* =========================
+ *  UPLOAD AVATAR
+ * ========================= */
+
+/**
+ * POST /api/upload/avatar
+ * Header: Authorization: Bearer <token>
+ * Body: multipart/form-data con campo "avatar"
+ * Respuesta: { ok, url }
+ */
+export async function uploadAvatar(token, file) {
+  const url = `${API_URL}/upload/avatar`;
+
+  const formData = new FormData();
+  formData.append("avatar", file);
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // NO ponemos Content-Type, lo maneja el navegador
+      },
+      body: formData,
+    });
+
+    const body = await res.json().catch(() => null);
+    console.log("uploadAvatar resp:", body);
+
+    if (!res.ok || !body?.url) {
+      const errorMessage = body?.error || body?.message || `HTTP ${res.status}`;
+      return { ok: false, status: res.status, error: errorMessage, url: null };
+    }
+
+    return { ok: true, status: res.status, error: null, url: body.url };
+  } catch (err) {
+    console.error("Error de red en uploadAvatar:", err);
+    return {
+      ok: false,
+      status: 0,
+      error: "Error de conexión con el servidor",
+      url: null,
+    };
+  }
+}
+
+/* =========================
+ *  NUTRICIÓN
+ * ========================= */
+
+/**
+ * GET /api/products/:id/nutrition
+ * Devuelve la fila de "nutrition" para ese producto, o null si no hay.
+ */
+export async function fetchNutritionByProductId(productId) {
+  if (!productId) return null;
+
+  const url = `${API_URL}/products/${productId}/nutrition`;
+
+  try {
+    const res = await fetch(url);
+    if (res.status === 404) {
+      // Producto sin nutrición todavía
+      return null;
+    }
+    if (!res.ok) {
+      console.error("Error HTTP en fetchNutritionByProductId:", res.status);
+      return null;
+    }
+    const data = await res.json().catch(() => null);
+    return data;
+  } catch (err) {
+    console.error("Error de red en fetchNutritionByProductId:", err);
+    return null;
+  }
+}
+
+/**
+ * POST /api/openfoodfacts/products/:id/fetch-nutrition
+ * Llama a OFF desde el backend y hace upsert en "nutrition" para product_id = id.
+ */
+export async function importNutritionFromOFF(productId) {
+  if (!productId) {
+    return {
+      ok: false,
+      status: 0,
+      error: "Falta productId",
+      data: null,
+    };
+  }
+
+  const url = `${API_URL}/openfoodfacts/products/${productId}/fetch-nutrition`;
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+    });
+
+    const body = await res.json().catch(() => null);
+
+    if (!res.ok) {
+      const errorMessage = body?.error || `HTTP ${res.status}`;
+      console.error("importNutritionFromOFF error:", res.status, body);
+      return {
+        ok: false,
+        status: res.status,
+        error: errorMessage,
+        data: body,
+      };
+    }
+
+    return {
+      ok: true,
+      status: res.status,
+      error: null,
+      data: body,
+    };
+  } catch (err) {
+    console.error("Error de red en importNutritionFromOFF:", err);
+    return {
+      ok: false,
+      status: 0,
+      error: "Error de conexión con el servidor",
+      data: null,
     };
   }
 }

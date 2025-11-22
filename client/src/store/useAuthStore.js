@@ -2,13 +2,12 @@
 import { create } from "zustand";
 
 const STORAGE_KEY = "fc_auth";
-const TOKEN_KEY = "fc_token";
 
 const useAuthStore = create((set) => ({
   user: null,
   token: null,
 
-  // Cargar sesión desde localStorage (lo llama App.jsx)
+  // Cargar desde localStorage al inicio (lo llamamos desde App)
   loadFromStorage: () => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -22,33 +21,32 @@ const useAuthStore = create((set) => ({
         token: parsed.token || null,
       });
 
-      // Para que api.js pueda usar el token si hace falta
-      localStorage.setItem(TOKEN_KEY, parsed.token || "");
+      // opcional: si quieres tener el token por separado
+      localStorage.setItem("fc_token", parsed.token || "");
     } catch (e) {
       console.error("Error leyendo auth de storage:", e);
     }
   },
 
-  // Guardar user + token cuando hacemos login
+  // Guardar usuario+token en estado y en localStorage
   setAuth: ({ user, token }) => {
-    set({ user: user || null, token: token || null });
+    set({ user, token });
 
     if (token) {
       localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({ user: user || null, token })
       );
-      localStorage.setItem(TOKEN_KEY, token);
+      localStorage.setItem("fc_token", token);
     } else {
       localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem("fc_token");
     }
   },
 
-  // Cerrar sesión
   logout: () => {
     localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem("fc_token");
     set({ user: null, token: null });
   },
 }));

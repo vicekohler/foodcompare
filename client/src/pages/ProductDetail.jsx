@@ -1,7 +1,12 @@
 // src/pages/ProductDetail.jsx
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { fetchProductById, fetchPricesByProductId } from "../lib/api";
+import {
+  fetchProductById,
+  fetchPricesByProductId,
+  fetchNutritionByProductId,
+  importNutritionFromOFF,
+} from "../lib/api";
 import useCartStore from "../store/useCartStore";
 
 export default function ProductDetail() {
@@ -13,7 +18,11 @@ export default function ProductDetail() {
   const [selectedStoreId, setSelectedStoreId] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
-  // Cargar producto + precios
+  const [nutrition, setNutrition] = useState(null);
+  const [loadingNutrition, setLoadingNutrition] = useState(false);
+  const [nutritionError, setNutritionError] = useState("");
+
+  // Cargar producto + precios + nutrición
   useEffect(() => {
     async function load() {
       const p = await fetchProductById(id);
@@ -21,9 +30,22 @@ export default function ProductDetail() {
 
       const pr = await fetchPricesByProductId(id);
       setPrices(pr);
-
       if (pr && pr.length > 0) {
         setSelectedStoreId(pr[0].store_id);
+      }
+
+      // Nutrición
+      try {
+        setLoadingNutrition(true);
+        setNutritionError("");
+        const n = await fetchNutritionByProductId(id);
+        setNutrition(n);
+      } catch (err) {
+        console.error("Error cargando nutrición:", err);
+        setNutrition(null);
+        setNutritionError("No se pudo cargar la información nutricional.");
+      } finally {
+        setLoadingNutrition(false);
       }
     }
     load();
@@ -67,6 +89,93 @@ export default function ProductDetail() {
     });
   }
 
+  async function handleFetchNutrition() {
+    try {
+      setLoadingNutrition(true);
+      setNutritionError("");
+      await importNutritionFromOFF(id);
+      const n = await fetchNutritionByProductId(id);
+      setNutrition(n);
+    } catch (err) {
+      console.error("Error importando nutrición:", err);
+      setNutritionError(err.message || "Error al importar nutrición.");
+    } finally {
+      setLoadingNutrition(false);
+    }
+  }
+
+  function renderNutritionRows() {
+    if (!nutrition) return null;
+
+    const rows = [
+      {
+        label: "Calorías",
+        value:
+          nutrition.calories_kcal_100g != null
+            ? `${nutrition.calories_kcal_100g} kcal`
+            : "-",
+      },
+      {
+        label: "Proteínas",
+        value:
+          nutrition.protein_g_100g != null
+            ? `${nutrition.protein_g_100g} g`
+            : "-",
+      },
+      {
+        label: "Grasas",
+        value:
+          nutrition.fat_g_100g != null ? `${nutrition.fat_g_100g} g` : "-",
+      },
+      {
+        label: "Carbohidratos",
+        value:
+          nutrition.carbs_g_100g != null
+            ? `${nutrition.carbs_g_100g} g`
+            : "-",
+      },
+      {
+        label: "Azúcares",
+        value:
+          nutrition.sugar_g_100g != null
+            ? `${nutrition.sugar_g_100g} g`
+            : "-",
+      },
+      {
+        label: "Fibra",
+        value:
+          nutrition.fiber_g_100g != null
+            ? `${nutrition.fiber_g_100g} g`
+            : "-",
+      },
+      {
+        label: "Sal",
+        value:
+          nutrition.salt_g_100g != null ? `${nutrition.salt_g_100g} g` : "-",
+      },
+      {
+        label: "NutriScore",
+        value: nutrition.nutriscore_grade || "-",
+      },
+      {
+        label: "NOVA",
+        value: nutrition.nova_group != null ? nutrition.nova_group : "-",
+      },
+    ];
+
+    return rows.map((row) => (
+      <div
+        key={row.label}
+        className="flex items-center justify-between py-1 border-b border-slate-800 last:border-b-0"
+      >
+        <span className="text-xs text-slate-400">{row.label}</span>
+        <span className="text-xs text-slate-100 font-medium">
+          {row.value}
+        </span>
+      </div>
+    ));
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-6 pt-32 grid grid-cols-1 md:grid-cols-3 gap-10">
       {/* Imagen izquierda */}
@@ -78,12 +187,12 @@ export default function ProductDetail() {
         />
       </div>
 
-      {/* Título + botón + cantidad */}
+      {/* Columna central: título + botón + cantidad + tabla nutricional */}
       <div className="md:col-span-1 flex flex-col gap-4">
         <h1 className="text-3xl font-bold text-white">{product.name}</h1>
 
         {/* Selector de cantidad + botón */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
             <span className="text-slate-300 text-sm">Cantidad</span>
             <div className="flex items-center gap-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1">
@@ -120,6 +229,69 @@ export default function ProductDetail() {
         <p className="text-slate-400 text-sm">
           Tamaño: {product.size_value} {product.size_unit}
         </p>
+
+        {/* Card de información nutricional */}
+        <div className="mt-4 bg-slate-900 border border-slate-700 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-semibold text-white">
+              Información nutricional (por 100 g/ml)
+            </h2>
+
+            <button
+              type="button"
+              onClick={handleFetchNutrition}
+              className="text-xs px-3 py-1 rounded-lg border border-emerald-500 text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={loadingNutrition}
+            >
+              {loadingNutrition ? "Actualizando..." : "Obtener desde OFF"}
+            </button>
+          </div>
+
+          {nutritionError && (
+            <p className="text-xs text-red-400 mb-2">{nutritionError}</p>
+          )}
+
+          {loadingNutrition && !nutrition && (
+            <p className="text-xs text-slate-400">
+              Cargando información nutricional...
+            </p>
+          )}
+
+          {!loadingNutrition && !nutrition && !nutritionError && (
+            <p className="text-xs text-slate-400">
+              Aún no tenemos información nutricional para este producto.
+              Puedes obtenerla desde OpenFoodFacts.
+            </p>
+          )}
+
+          {nutrition && (
+            <div className="mt-2 text-xs">
+              {renderNutritionRows()}
+
+              {nutrition.allergens && (
+                <div className="mt-3">
+                  <p className="text-[11px] text-slate-400 mb-1">
+                    Alérgenos:
+                  </p>
+                  <p className="text-[11px] text-slate-100">
+                    {nutrition.allergens}
+                  </p>
+                </div>
+              )}
+
+              {nutrition.ingredients && (
+                <div className="mt-3">
+                  <p className="text-[11px] text-slate-400 mb-1">
+                    Ingredientes:
+                  </p>
+                  <p className="text-[11px] text-slate-100 line-clamp-3">
+                    {nutrition.ingredients}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Columna derecha: precios por supermercado */}
@@ -159,9 +331,9 @@ export default function ProductDetail() {
                   {store.normalized_price && (
                     <span className="text-xs text-slate-400">
                       ${store.normalized_price.toLocaleString("es-CL")} / 100{" "}
-                      {String(product.size_unit || "").toLowerCase().includes(
-                        "g"
-                      )
+                      {String(product.size_unit || "")
+                        .toLowerCase()
+                        .includes("g")
                         ? "g"
                         : "ml"}
                     </span>

@@ -3,12 +3,14 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { loginRequest } from "../lib/api";
 import useAuthStore from "../store/useAuthStore";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingGoogle, setLoadingGoogle] = useState(false);
 
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -16,41 +18,47 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    if (!email || !password) {
-      setError("Email y contraseña son obligatorios");
+    const resp = await loginRequest({ email, password });
+
+    setLoading(false);
+
+    if (!resp.ok) {
+      setError(resp.error || "No se pudo iniciar sesión");
       return;
     }
 
-    setLoading(true);
+    setAuth({
+      user: resp.user,
+      token: resp.token,
+    });
 
+    navigate("/");
+  }
+
+  async function handleLoginWithGoogle() {
     try {
-      const resp = await loginRequest({ email, password });
+      setError("");
+      setLoadingGoogle(true);
 
-      if (!resp) {
-        setError("No se pudo conectar con el servidor");
-        return;
-      }
-
-      if (!resp.ok) {
-        // loginRequest te puede devolver { ok:false, status, error }
-        setError(resp.error || "Credenciales inválidas");
-        console.error("Login error:", resp.status, resp);
-        return;
-      }
-
-      // Caso éxito: resp.user y resp.token vienen del backend
-      setAuth({
-        user: resp.user,
-        token: resp.token,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
       });
 
-      navigate("/");
+      if (error) {
+        console.error("Error en signInWithOAuth:", error);
+        setError("No se pudo iniciar sesión con Google");
+        setLoadingGoogle(false);
+      }
+      // En el caso exitoso, el navegador se redirige y este componente deja de existir.
     } catch (err) {
-      console.error("Error inesperado en login:", err);
-      setError("Error inesperado al iniciar sesión");
-    } finally {
-      setLoading(false);
+      console.error("Error en handleLoginWithGoogle:", err);
+      setError("Error inesperado al iniciar sesión con Google");
+      setLoadingGoogle(false);
     }
   }
 
@@ -60,6 +68,7 @@ export default function Login() {
         <h1 className="text-2xl font-bold mb-6">Iniciar sesión</h1>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
+          {/* Email */}
           <div>
             <label className="block text-sm mb-1">Email</label>
             <input
@@ -71,6 +80,7 @@ export default function Login() {
             />
           </div>
 
+          {/* Contraseña */}
           <div>
             <label className="block text-sm mb-1">Contraseña</label>
             <input
@@ -90,12 +100,29 @@ export default function Login() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || loadingGoogle}
             className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed text-slate-900 font-semibold py-2 rounded-lg transition"
           >
-            {loading ? "Entrando..." : "Entrar"}
+            {loading ? "Ingresando..." : "Ingresar"}
           </button>
         </form>
+
+        {/* Separador */}
+        <div className="mt-4 flex items-center gap-2">
+          <div className="flex-1 h-px bg-slate-700" />
+          <span className="text-[11px] text-slate-400">o</span>
+          <div className="flex-1 h-px bg-slate-700" />
+        </div>
+
+        {/* Botón Google */}
+        <button
+          type="button"
+          onClick={handleLoginWithGoogle}
+          disabled={loadingGoogle || loading}
+          className="mt-4 w-full border border-slate-700 hover:border-emerald-500 text-slate-100 text-sm py-2 rounded-lg flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed transition"
+        >
+          {loadingGoogle ? "Redirigiendo a Google..." : "Continuar con Google"}
+        </button>
 
         <p className="mt-4 text-xs text-slate-400">
           ¿No tienes cuenta?{" "}
@@ -103,7 +130,7 @@ export default function Login() {
             to="/signup"
             className="text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline"
           >
-            Crear cuenta
+            Regístrate
           </Link>
         </p>
       </div>

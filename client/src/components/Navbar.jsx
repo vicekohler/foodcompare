@@ -8,6 +8,7 @@ import useAuthStore from "../store/useAuthStore";
 export default function Navbar() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const items = useCartStore((s) => s.items);
 
@@ -27,15 +28,40 @@ export default function Navbar() {
     }
   }
 
-  function handleAuthClick() {
-    if (user) {
-      // Cierra sesión
-      logout();
-    } else {
-      // Va al login
-      navigate("/login");
-    }
+  function handleLoginClick() {
+    navigate("/login");
   }
+
+  function handleLogout() {
+    logout();
+    setUserMenuOpen(false);
+    navigate("/");
+  }
+
+  function handleGoProfile() {
+    setUserMenuOpen(false);
+    navigate("/profile");
+  }
+
+  // Nombre que se muestra (Nombre + Apellido, fallback email)
+  const displayName = user
+    ? `${user.name || ""} ${user.last_name || ""}`.trim() || user.email
+    : "";
+
+  // Texto base para iniciales (nombre + apellido, fallback email)
+  const initialsSource = user
+    ? `${user.name || ""} ${user.last_name || ""}`.trim() ||
+      user.email ||
+      "?"
+    : "?";
+
+  // Iniciales para el avatar
+  const initials = initialsSource
+    .trim()
+    .split(" ")
+    .map((p) => p[0]?.toUpperCase())
+    .slice(0, 2)
+    .join("");
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
@@ -72,13 +98,61 @@ export default function Navbar() {
         </button>
 
         {/* Login / Usuario */}
-        <button
-          type="button"
-          onClick={handleAuthClick}
-          className="text-sm text-slate-200 hover:text-emerald-400"
-        >
-          {user ? `Salir (${user.name || user.email})` : "Iniciar sesión"}
-        </button>
+        {!user && (
+          <button
+            type="button"
+            onClick={handleLoginClick}
+            className="text-sm text-slate-200 hover:text-emerald-400"
+          >
+            Iniciar sesión
+          </button>
+        )}
+
+        {user && (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setUserMenuOpen((v) => !v)}
+              className="flex items-center gap-2 text-sm text-slate-200 hover:text-emerald-400"
+            >
+              <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center overflow-hidden">
+                {user.avatar_url ? (
+                  <img
+                    src={user.avatar_url}
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xs font-bold text-slate-900">
+                    {initials}
+                  </span>
+                )}
+              </div>
+              <span className="hidden sm:inline max-w-[140px] truncate">
+                {displayName}
+              </span>
+            </button>
+
+            {userMenuOpen && (
+              <div className="absolute right-0 mt-2 w-44 bg-slate-900 border border-slate-700 rounded-xl shadow-lg py-1 text-sm">
+                <button
+                  type="button"
+                  onClick={handleGoProfile}
+                  className="w-full text-left px-3 py-2 hover:bg-slate-800 text-slate-100"
+                >
+                  Perfil
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full text-left px-3 py-2 hover:bg-slate-800 text-red-300"
+                >
+                  Cerrar sesión
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Carrito */}
         <button

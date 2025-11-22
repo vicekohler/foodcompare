@@ -10,38 +10,36 @@ import Home from "./pages/Home";
 import ProductDetail from "./pages/ProductDetail";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Profile from "./pages/Profile";
+import AuthCallback from "./pages/AuthCallback"; // ⬅️ IMPORT NUEVO
 
 import useAuthStore from "./store/useAuthStore";
 import useCartStore from "./store/useCartStore";
 
 export default function App() {
   // Auth
-  const loadAuth = useAuthStore((s) => s.loadFromStorage);
+  const loadFromStorage = useAuthStore((s) => s.loadFromStorage);
   const user = useAuthStore((s) => s.user);
 
   // Carrito
   const items = useCartStore((s) => s.items);
 
-  // Para saber quién era el “dueño” anterior del carrito
   const prevOwnerRef = useRef(null);
 
-  // 1) Al montar la app, cargar auth desde localStorage
+  // 1) Cargar auth al montar
   useEffect(() => {
-    loadAuth();
-  }, [loadAuth]);
+    loadFromStorage();
+  }, [loadFromStorage]);
 
-  // Función helper: genera la clave de storage según usuario
   function getCartKey(ownerId) {
     return ownerId ? `fc_cart_${ownerId}` : "fc_cart_guest";
   }
 
-  // 2) Cuando cambia el usuario (login / logout), guardar carrito del anterior
-  //    y cargar carrito del nuevo usuario desde su propia key
+  // 2) Cambio de usuario => swap de carrito
   useEffect(() => {
-    const currentOwnerId = user?.id || null; // null => invitado
+    const currentOwnerId = user?.id || null;
     const prevOwnerId = prevOwnerRef.current;
 
-    // a) Guardar carrito del usuario anterior
     if (prevOwnerId !== null) {
       const prevKey = getCartKey(prevOwnerId);
       const prevItems = useCartStore.getState().items;
@@ -52,7 +50,6 @@ export default function App() {
       }
     }
 
-    // b) Cargar carrito del usuario actual
     const newKey = getCartKey(currentOwnerId);
     try {
       const raw = localStorage.getItem(newKey);
@@ -64,7 +61,6 @@ export default function App() {
           useCartStore.setState({ items: [] });
         }
       } else {
-        // Si no hay nada guardado para ese usuario, carrito vacío
         useCartStore.setState({ items: [] });
       }
     } catch (e) {
@@ -72,11 +68,10 @@ export default function App() {
       useCartStore.setState({ items: [] });
     }
 
-    // Actualizar ref
     prevOwnerRef.current = currentOwnerId;
   }, [user?.id]);
 
-  // 3) Cada vez que cambian los items, persistir el carrito del usuario actual
+  // 3) Persistir carrito
   useEffect(() => {
     const currentOwnerId = user?.id || null;
     const key = getCartKey(currentOwnerId);
@@ -100,6 +95,8 @@ export default function App() {
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/auth/callback" element={<AuthCallback />} /> {/* ⬅️ RUTA NUEVA */}
           </Routes>
         </main>
       </div>
