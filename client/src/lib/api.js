@@ -1,7 +1,13 @@
 // client/src/lib/api.js
 
 // Siempre usamos la API con prefijo /api
-export const API_URL = "http://localhost:4000/api";
+// En desarrollo: VITE_API_URL=http://localhost:4000
+// En producción: VITE_API_URL=https://tu-backend.onrender.com
+const API_BASE =
+  (import.meta.env && import.meta.env.VITE_API_URL) ||
+  "http://localhost:4000";
+
+export const API_URL = `${API_BASE.replace(/\/$/, "")}/api`;
 
 /**
  * Wrapper genérico que devuelve directamente el JSON (o null en error).
@@ -325,7 +331,6 @@ export async function fetchNutritionByProductId(productId) {
 export async function importNutritionFromOFF(productId) {
   if (!productId) return { ok: false, error: "Falta productId" };
 
-  // ← corregido, sin "}" extra al final
   const url = `${API_URL}/openfoodfacts/products/${productId}/fetch-nutrition`;
 
   try {

@@ -72,7 +72,8 @@ function isExpired(expiresAt) {
 ============================================================ */
 router.get("/", async (req, res) => {
   try {
-    const limit = Math.min(Number(req.query.limit) || 50, 200);
+    // Aumentamos el límite por defecto a 200 para ver todos los productos
+    const limit = Math.min(Number(req.query.limit) || 200, 200);
     const offset = Number(req.query.offset) || 0;
 
     const { data, error } = await supabase
@@ -305,6 +306,5 @@ router.get("/categories/list", async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-
 
 export default router;

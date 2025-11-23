@@ -35,7 +35,21 @@ app.use((req, res, next) => {
 /* ============================================
    MIDDLEWARES
    ============================================ */
-app.use(cors({ origin: true, credentials: true }));
+
+// Origen de producción configurable por ENV (para Render/Vercel)
+const FRONTEND_ORIGIN =
+  process.env.FRONTEND_ORIGIN || "https://tu-frontend.vercel.app";
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173", // desarrollo
+      FRONTEND_ORIGIN, // producción (Vercel u otro dominio)
+    ],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(morgan("dev"));
 

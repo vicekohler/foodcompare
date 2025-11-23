@@ -30,6 +30,72 @@ function isStrongPassword(password) {
   return true;
 }
 
+// ✅ Helper: partir nombre completo en { firstName, lastName }
+function splitFullName(fullName) {
+  if (!fullName) return { firstName: null, lastName: null };
+
+  const parts = String(fullName).trim().split(/\s+/);
+
+  if (parts.length === 1) {
+    return { firstName: parts[0], lastName: "" };
+  }
+
+  const firstName = parts.slice(0, -1).join(" ");
+  const lastName = parts[parts.length - 1];
+
+  return { firstName, lastName };
+}
+
+// ✅ Middlewares de validación básica de entrada (hardening mínimo)
+function validateSignupBody(req, res, next) {
+  const { name, last_name, email, password } = req.body || {};
+
+  if (!name || typeof name !== "string" || name.trim().length < 2) {
+    return res.status(400).json({
+      error: "Nombre inválido (mínimo 2 caracteres).",
+    });
+  }
+
+  if (!last_name || typeof last_name !== "string" || last_name.trim().length < 2) {
+    return res.status(400).json({
+      error: "Apellido inválido (mínimo 2 caracteres).",
+    });
+  }
+
+  if (!email || typeof email !== "string" || !email.includes("@")) {
+    return res.status(400).json({
+      error: "Email inválido.",
+    });
+  }
+
+  if (!password || typeof password !== "string" || password.length < 8) {
+    return res.status(400).json({
+      error:
+        "La contraseña debe tener al menos 8 caracteres.",
+    });
+  }
+
+  next();
+}
+
+function validateLoginBody(req, res, next) {
+  const { email, password } = req.body || {};
+
+  if (!email || typeof email !== "string" || !email.includes("@")) {
+    return res.status(400).json({
+      error: "Email inválido.",
+    });
+  }
+
+  if (!password || typeof password !== "string" || password.length < 6) {
+    return res.status(400).json({
+      error: "Contraseña inválida.",
+    });
+  }
+
+  next();
+}
+
 // Middleware JWT
 function requireAuth(req, res, next) {
   const auth = req.headers.authorization || "";
@@ -66,17 +132,12 @@ async function findUserById(id) {
  * POST /api/auth/signup
  * Body: { name, last_name, email, password, phone?, avatar_url? }
  */
-router.post("/signup", async (req, res) => {
+router.post("/signup", validateSignupBody, async (req, res) => {
   try {
-    const { name, last_name, email, password, phone, avatar_url } = req.body || {};
+    const { name, last_name, email, password, phone, avatar_url } =
+      req.body || {};
 
-    if (!name || !last_name || !email || !password) {
-      return res.status(400).json({
-        error: "Nombre, apellido, email y contraseña son obligatorios",
-      });
-    }
-
-    // Validación de contraseña fuerte
+    // Validación de contraseña fuerte (más estricta que la del middleware)
     if (!isStrongPassword(password)) {
       return res.status(400).json({
         error:
@@ -153,15 +214,9 @@ router.post("/signup", async (req, res) => {
  * POST /api/auth/login
  * Body: { email, password }
  */
-router.post("/login", async (req, res) => {
+router.post("/login", validateLoginBody, async (req, res) => {
   try {
     const { email, password } = req.body || {};
-
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ error: "Email y contraseña son obligatorios" });
-    }
 
     const normEmail = normalizeEmail(email);
 
@@ -341,7 +396,15 @@ router.put("/me", requireAuth, async (req, res) => {
 
 router.post("/login-oauth", async (req, res) => {
   try {
-    const { provider, supabase_user_id, email, name, avatar_url } = req.body || {};
+    const {
+      provider,
+      supabase_user_id,
+      email,
+      name,
+      given_name,
+      family_name,
+      avatar_url,
+    } = req.body || {};
 
     if (!provider || provider !== "google") {
       return res.status(400).json({ error: "Proveedor OAuth inválido" });
@@ -354,6 +417,14 @@ router.post("/login-oauth", async (req, res) => {
     }
 
     const normEmail = normalizeEmail(email);
+
+    // Nombre completo origen (puede venir en name o en given_name/family_name)
+    const fullNameSource =
+      (name && String(name).trim()) ||
+      `${given_name || ""} ${family_name || ""}`.trim() ||
+      null;
+
+    const { firstName, lastName } = splitFullName(fullNameSource);
 
     // Buscamos usuario por email
     const { data: existing, error: findErr } = await supabase
@@ -378,8 +449,8 @@ router.post("/login-oauth", async (req, res) => {
         .insert([
           {
             email: normEmail,
-            name: name ? String(name).trim() : null,
-            last_name: null,
+            name: firstName || fullNameSource || null,
+            last_name: lastName || null,
             provider: "google",
             phone: null,
             avatar_url: avatar_url || null,
@@ -393,18 +464,32 @@ router.post("/login-oauth", async (req, res) => {
 
       if (insertErr) {
         console.error("Error insertando usuario en login-oauth:", insertErr);
-        return res.status(500).json({ error: "No se pudo crear el usuario OAuth" });
+        return res
+          .status(500)
+          .json({ error: "No se pudo crear el usuario OAuth" });
       }
 
       userRecord = inserted;
     } else {
-      // Si existe, opcionalmente actualizamos provider y avatar_url
+      // Si existe, opcionalmente actualizamos provider, avatar_url y faltantes de nombre/apellido
       const updatePayload = {};
+
       if (userRecord.provider !== "google") {
         updatePayload.provider = "google";
       }
+
       if (avatar_url && userRecord.avatar_url !== avatar_url) {
         updatePayload.avatar_url = avatar_url;
+      }
+
+      // Si no tiene last_name y sí tenemos uno parseado, lo rellenamos
+      if (!userRecord.last_name && lastName) {
+        updatePayload.last_name = lastName;
+      }
+
+      // Si no tiene name (o está vacío) y tenemos firstName, lo rellenamos
+      if ((!userRecord.name || !userRecord.name.trim()) && firstName) {
+        updatePayload.name = firstName;
       }
 
       if (Object.keys(updatePayload).length > 0) {
