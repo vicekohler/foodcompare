@@ -232,7 +232,7 @@ La aplicación utiliza **Google Gemini 1.5 Flash** para:
 ---
 
 ## 🖥️ Ejecución local
-
+```
 ### Backend
 ```
 cd server
