@@ -33,30 +33,21 @@ app.use((req, res, next) => {
 });
 
 /* ============================================
-   CORS CONFIG (SOLO ESTO ES LO IMPORTANTE)
+   CORS CONFIG — FIX DEFINITIVO
    ============================================ */
 
-// ORIGENES PERMITIDOS
-// - localhost para desarrollo
-// - frontend en producción (variable en Render)
+// Lista rígida de orígenes permitidos
+// -> el localhost
+// -> tu dominio real en Vercel
 const allowedOrigins = [
   "http://localhost:5173",
-  process.env.FRONTEND_ORIGIN,   // ejemplo: https://foodcompare.vercel.app
-].filter(Boolean); // elimina undefined
+  "https://foodcompare.vercel.app"
+];
 
+// CORS sin lógica condicional que genera errores, solo fijo
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Permitir peticiones sin origin (como Postman)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      console.warn("CORS bloqueado para origen:", origin);
-      return callback(new Error("Not allowed by CORS"));
-    },
+    origin: allowedOrigins,
     credentials: true,
   })
 );
