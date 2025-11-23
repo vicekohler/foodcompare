@@ -447,3 +447,42 @@ export async function fetchCategories() {
   const data = await safeFetch(`/products/categories/list`);
   return data?.categories ?? [];
 }
+
+/* =========================
+ *  COTIZACIÓN DE CARRITO
+ * ========================= */
+
+/**
+ * Envía el carrito al backend para simular cuánto costaría
+ * comprar TODO en cada supermercado.
+ *
+ * items: array de items del store, debe tener product_id y qty
+ */
+export async function fetchCartQuote(items) {
+  const url = `${API_URL}/prices/quote`;
+
+  try {
+    const payloadItems = (items || []).map((it) => ({
+      product_id: it.product_id || it.id,
+      qty: it.qty || it.quantity || 1,
+    }));
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: payloadItems }),
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok) {
+      console.error("fetchCartQuote error:", res.status, data);
+      return null;
+    }
+
+    return data; // { by_store, best_store }
+  } catch (err) {
+    console.error("fetchCartQuote network error:", err);
+    return null;
+  }
+}

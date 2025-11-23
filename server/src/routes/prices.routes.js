@@ -275,4 +275,120 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+// ================== Cotización de carrito por supermercado ==================
+//
+// POST /api/prices/quote
+// body: { items: [ { product_id, qty } ] }
+//
+// Devuelve:
+// {
+//   by_store: [
+//     { store_id, store_name, store_logo, total }
+//   ],
+//   best_store: { store_id, store_name, store_logo, total } | null
+// }
+router.post("/quote", async (req, res) => {
+  try {
+    const body = req.body || {};
+    const items = Array.isArray(body.items) ? body.items : [];
+
+    if (!items.length) {
+      return res.status(400).json({ error: "Se requiere items con product_id y qty" });
+    }
+
+    // 1) Normalizar items → product_id -> qty total
+    const qtyMap = new Map(); // product_id -> qty
+    for (const it of items) {
+      const pid = Number(it.product_id || it.id);
+      const q = Number(it.qty || it.quantity || 0);
+      if (!pid || !q) continue;
+      qtyMap.set(pid, (qtyMap.get(pid) || 0) + q);
+    }
+
+    const productIds = [...qtyMap.keys()];
+    if (!productIds.length) {
+      return res.status(400).json({ error: "items sin product_id válido" });
+    }
+
+    // 2) Traer todos los precios para esos productos, por supermercado
+    const { data: rows, error } = await supabase
+      .from("prices")
+      .select(`
+        product_id,
+        store_id,
+        price,
+        stores ( id, name, logo_url )
+      `)
+      .in("product_id", productIds);
+
+    if (error) throw error;
+    if (!rows || !rows.length) {
+      return res.json({ by_store: [], best_store: null });
+    }
+
+    // 3) Mapear product -> (store -> price) y metadata de tiendas
+    const productStorePrices = new Map(); // pid -> Map(store_id -> price)
+    const storesInfo = new Map(); // store_id -> { store_id, store_name, store_logo }
+
+    for (const r of rows) {
+      const pid = r.product_id;
+      const sid = r.store_id;
+
+      if (!productStorePrices.has(pid)) {
+        productStorePrices.set(pid, new Map());
+      }
+      productStorePrices.get(pid).set(sid, r.price);
+
+      if (!storesInfo.has(sid)) {
+        storesInfo.set(sid, {
+          store_id: sid,
+          store_name: r.stores?.name ?? null,
+          store_logo: r.stores?.logo_url ?? null,
+        });
+      }
+    }
+
+    // 4) Solo consideramos supermercados que tengan precio para TODOS los productos del carrito
+    const candidates = [];
+
+    for (const [sid, info] of storesInfo.entries()) {
+      let ok = true;
+      let total = 0;
+
+      for (const [pid, qty] of qtyMap.entries()) {
+        const storePrices = productStorePrices.get(pid);
+        const pr = storePrices?.get(sid);
+        if (pr == null) {
+          ok = false;
+          break;
+        }
+        total += pr * qty;
+      }
+
+      if (ok) {
+        candidates.push({
+          ...info,
+          total,
+        });
+      }
+    }
+
+    if (!candidates.length) {
+      return res.json({ by_store: [], best_store: null });
+    }
+
+    candidates.sort((a, b) => a.total - b.total);
+    const best_store = candidates[0];
+
+    return res.json({
+      by_store: candidates,
+      best_store,
+    });
+  } catch (err) {
+    console.error("POST /prices/quote error:", err);
+    return res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
+
 export default router;
