@@ -1,10 +1,11 @@
 // client/src/App.jsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 import Navbar from "./components/Navbar";
 import CartDrawer from "./components/CartDrawer";
 import ChatDrawer from "./components/ChatDrawer";
+import Toast from "./components/Toast"; // ⬅ NUEVO
 
 import Home from "./pages/Home";
 import ProductDetail from "./pages/ProductDetail";
@@ -22,64 +23,18 @@ export default function App() {
   const loadFromStorage = useAuthStore((s) => s.loadFromStorage);
   const user = useAuthStore((s) => s.user);
 
-  // Carrito
-  const items = useCartStore((s) => s.items);
-  const prevOwnerRef = useRef(null);
+  // Carrito (vinculado a usuario)
+  const setCurrentUser = useCartStore((s) => s.setCurrentUser);
 
+  // Cargar sesión al montar
   useEffect(() => {
     loadFromStorage();
   }, [loadFromStorage]);
 
-  function getCartKey(ownerId) {
-    return ownerId ? `fc_cart_${ownerId}` : "fc_cart_guest";
-  }
-
-  // swap de carrito al cambiar de usuario
+  // Cada vez que cambie el usuario, apuntar el carrito al dueño correcto
   useEffect(() => {
-    const currentOwnerId = user?.id || null;
-    const prevOwnerId = prevOwnerRef.current;
-
-    if (prevOwnerId !== null) {
-      const prevKey = getCartKey(prevOwnerId);
-      const prevItems = useCartStore.getState().items;
-      try {
-        localStorage.setItem(prevKey, JSON.stringify({ items: prevItems }));
-      } catch (e) {
-        console.error("Error guardando carrito de", prevOwnerId, e);
-      }
-    }
-
-    const newKey = getCartKey(currentOwnerId);
-    try {
-      const raw = localStorage.getItem(newKey);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && Array.isArray(parsed.items)) {
-          useCartStore.setState({ items: parsed.items });
-        } else {
-          useCartStore.setState({ items: [] });
-        }
-      } else {
-        useCartStore.setState({ items: [] });
-      }
-    } catch (e) {
-      console.error("Error cargando carrito para", currentOwnerId, e);
-      useCartStore.setState({ items: [] });
-    }
-
-    prevOwnerRef.current = currentOwnerId;
-  }, [user?.id]);
-
-  // persistir carrito
-  useEffect(() => {
-    const currentOwnerId = user?.id || null;
-    const key = getCartKey(currentOwnerId);
-    try {
-      localStorage.setItem(key, JSON.stringify({ items }));
-    } catch (e) {
-      console.error("Error guardando carrito en storage:", e);
-    }
-  }, [items, user?.id]);
+    setCurrentUser(user?.id || null);
+  }, [user?.id, setCurrentUser]);
 
   return (
     <BrowserRouter>
@@ -88,6 +43,7 @@ export default function App() {
           <Navbar />
           <CartDrawer />
           <ChatDrawer />
+          <Toast /> {/* ⬅ AQUÍ se muestra el toast */}
 
           <main className="pt-20">
             <Routes>

@@ -325,7 +325,8 @@ export async function fetchNutritionByProductId(productId) {
 export async function importNutritionFromOFF(productId) {
   if (!productId) return { ok: false, error: "Falta productId" };
 
-  const url = `${API_URL}/openfoodfacts/products/${productId}/fetch-nutrition}`;
+  // ← corregido, sin "}" extra al final
+  const url = `${API_URL}/openfoodfacts/products/${productId}/fetch-nutrition`;
 
   try {
     const res = await fetch(url, { method: "POST" });
@@ -414,10 +415,9 @@ export async function fetchAiSubstitutes(productId, lang = "es") {
 
   try {
     const res = await fetch(url);
-
     const json = await res.json().catch(() => null);
 
-    if (!res.ok) {
+    if (!res.ok || !json) {
       return {
         ok: false,
         status: res.status,
@@ -425,7 +425,13 @@ export async function fetchAiSubstitutes(productId, lang = "es") {
       };
     }
 
-    return json;
+    // Pasamos todo lo que trae el backend (product, nutrition, ai, ok…)
+    return {
+      ok: json.ok ?? true,
+      status: res.status,
+      error: null,
+      ...json,
+    };
   } catch (err) {
     console.error("fetchAiSubstitutes error:", err);
     return {
@@ -458,7 +464,7 @@ export async function fetchAiNutritionAdvice({
 
     const body = await res.json().catch(() => null);
 
-    if (!res.ok) {
+    if (!res.ok || !body) {
       return {
         ok: false,
         status: res.status,
@@ -480,6 +486,50 @@ export async function fetchAiNutritionAdvice({
       status: 0,
       error: "Error de conexión con el servidor (IA)",
       advice: null,
+    };
+  }
+}
+
+/**
+ * POST /api/ai/chat
+ * Body: { messages: [{ role: "user" | "assistant", content: string }], lang }
+ * Respuesta: { ok, reply }
+ */
+export async function sendAiChatMessage({ messages, lang = "es" }) {
+  const url = `${API_URL}/ai/chat`;
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages, lang }),
+    });
+
+    const body = await res.json().catch(() => null);
+
+    if (!res.ok || !body) {
+      console.error("sendAiChatMessage error:", res.status, body);
+      return {
+        ok: false,
+        status: res.status,
+        error: body?.error || `HTTP ${res.status}`,
+        reply: "",
+      };
+    }
+
+    return {
+      ok: true,
+      status: res.status,
+      error: null,
+      reply: body?.reply || "",
+    };
+  } catch (err) {
+    console.error("sendAiChatMessage network error:", err);
+    return {
+      ok: false,
+      status: 0,
+      error: "Error de conexión con el servidor (IA)",
+      reply: "",
     };
   }
 }

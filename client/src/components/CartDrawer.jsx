@@ -13,7 +13,7 @@ export default function CartDrawer() {
 
   const items = useCartStore((s) => s.items);
   const clearCart = useCartStore((s) => s.clearCart);
-  const setQuantity = useCartStore((s) => s.setQuantity);
+  const updateQty = useCartStore((s) => s.updateQty);
   const removeItem = useCartStore((s) => s.removeItem);
 
   const [openSavings, setOpenSavings] = useState(false);
@@ -42,11 +42,13 @@ export default function CartDrawer() {
   const cartTotal = storeGroups.reduce((sum, g) => sum + g.total, 0);
 
   function handleChangeQty(storeId, productId, newQty) {
-    setQuantity(storeId, productId, newQty);
+    // ⬅ No bajar de 1. No borrar automáticamente.
+    if (newQty < 1) return;
+    updateQty(productId, storeId, newQty);
   }
 
   function handleRemove(storeId, productId) {
-    removeItem(storeId, productId);
+    removeItem(productId, storeId);
   }
 
   return (
@@ -130,14 +132,13 @@ export default function CartDrawer() {
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => {
-                              if ((item.qty || 1) <= 1) return;
+                            onClick={() =>
                               handleChangeQty(
                                 group.storeId,
                                 productId,
                                 (item.qty || 1) - 1
-                              );
-                            }}
+                              )
+                            }
                             className="w-7 h-7 flex items-center justify-center rounded bg-slate-800 text-slate-200 text-sm hover:bg-slate-700"
                           >
                             –
@@ -187,7 +188,6 @@ export default function CartDrawer() {
 
           {/* Footer */}
           <div className="border-t border-slate-800 px-4 py-4 space-y-3">
-            {/* Total + Botón ahorro */}
             <div className="flex items-center justify-between text-sm">
               <button
                 type="button"

@@ -1,99 +1,123 @@
-// src/store/useCartStore.js
+// client/src/store/useCartStore.js
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+// helper para agregar / acumular cantidad
+function upsertItem(list, newItem) {
+  const idx = list.findIndex(
+    (it) =>
+      (it.product_id ?? it.id) === (newItem.product_id ?? newItem.id) &&
+      it.store_id === newItem.store_id
+  );
+
+  const qtyToAdd = newItem.qty ?? 1;
+
+  if (idx === -1) {
+    return [...list, { ...newItem, qty: qtyToAdd }];
+  }
+
+  const copy = [...list];
+  const prev = copy[idx];
+  copy[idx] = {
+    ...prev,
+    ...newItem,
+    qty: (prev.qty || 0) + qtyToAdd,
+  };
+  return copy;
+}
+
 const useCartStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
+      // usuario actual (null -> "anon")
+      currentUserId: "anon",
+      // mapa de carritos: { [userId]: Item[] }
+      cartsByUser: {},
+      // carrito visible (se deriva de cartsByUser[currentUserId])
       items: [],
 
-      // Agregar producto al carrito
-      addItem: (item) =>
+      // Debes llamarlo cuando cambie el usuario logueado
+      setCurrentUser(userId) {
+        const uid = userId || "anon";
+        const { cartsByUser } = get();
+        const items = cartsByUser[uid] || [];
+        set({ currentUserId: uid, items });
+      },
+
+      addItem(item) {
         set((state) => {
-          const productId = item.product_id ?? item.id;
-          const storeId = item.store_id ?? "unknown";
+          const uid = state.currentUserId || "anon";
+          const currentItems = state.items || [];
+          const nextItems = upsertItem(currentItems, item);
 
-          if (!productId) {
-            console.warn("addItem sin product_id/id:", item);
-            return state;
-          }
+          return {
+            items: nextItems,
+            cartsByUser: {
+              ...state.cartsByUser,
+              [uid]: nextItems,
+            },
+          };
+        });
+      },
 
-          const idx = state.items.findIndex(
-            (it) =>
+      updateQty(productId, storeId, qty) {
+        set((state) => {
+          const uid = state.currentUserId || "anon";
+          const nextItems = (state.items || [])
+            .map((it) =>
               (it.product_id ?? it.id) === productId &&
-              (it.store_id ?? "unknown") === storeId
-          );
-
-          const baseItem = {
-            ...item,
-            product_id: productId,
-            store_id: storeId,
-          };
-
-          if (idx !== -1) {
-            const copy = [...state.items];
-            copy[idx] = {
-              ...copy[idx],
-              qty: (copy[idx].qty || 0) + (item.qty || 1),
-            };
-            return { items: copy };
-          }
-
-          return {
-            items: [
-              ...state.items,
-              {
-                ...baseItem,
-                qty: item.qty || 1,
-              },
-            ],
-          };
-        }),
-
-      // Cambiar cantidad (usado por los botones +/-)
-      setQuantity: (storeId, productId, qty) =>
-        set((state) => {
-          const newQty = Number(qty);
-
-          if (!newQty || newQty <= 0) {
-            // Eliminar línea si llega a 0
-            return {
-              items: state.items.filter(
-                (it) =>
-                  !(
-                    (it.store_id ?? "unknown") === storeId &&
-                    (it.product_id ?? it.id) === productId
-                  )
-              ),
-            };
-          }
-
-          return {
-            items: state.items.map((it) =>
-              (it.store_id ?? "unknown") === storeId &&
-              (it.product_id ?? it.id) === productId
-                ? { ...it, qty: newQty }
+              (storeId == null || it.store_id === storeId)
+                ? { ...it, qty }
                 : it
-            ),
-          };
-        }),
+            )
+            .filter((it) => (it.qty || 0) > 0);
 
-      // Quitar línea manualmente
-      removeItem: (storeId, productId) =>
-        set((state) => ({
-          items: state.items.filter(
+          return {
+            items: nextItems,
+            cartsByUser: {
+              ...state.cartsByUser,
+              [uid]: nextItems,
+            },
+          };
+        });
+      },
+
+      removeItem(productId, storeId) {
+        set((state) => {
+          const uid = state.currentUserId || "anon";
+          const nextItems = (state.items || []).filter(
             (it) =>
               !(
-                (it.store_id ?? "unknown") === storeId &&
-                (it.product_id ?? it.id) === productId
+                (it.product_id ?? it.id) === productId &&
+                (storeId == null || it.store_id === storeId)
               )
-          ),
-        })),
+          );
 
-      clearCart: () => set({ items: [] }),
+          return {
+            items: nextItems,
+            cartsByUser: {
+              ...state.cartsByUser,
+              [uid]: nextItems,
+            },
+          };
+        });
+      },
+
+      clearCart() {
+        set((state) => {
+          const uid = state.currentUserId || "anon";
+          return {
+            items: [],
+            cartsByUser: {
+              ...state.cartsByUser,
+              [uid]: [],
+            },
+          };
+        });
+      },
     }),
     {
-      name: "foodcompare-cart",
+      name: "cart-store-v2", // clave nueva en localStorage para no mezclar con la anterior
     }
   )
 );

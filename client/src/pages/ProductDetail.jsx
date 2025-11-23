@@ -10,12 +10,14 @@ import {
   fetchAiNutritionAdvice,
 } from "../lib/api";
 import useCartStore from "../store/useCartStore";
+import useUIStore from "../store/useUIStore";       // ⬅ NUEVO
 import { useI18n } from "../i18n/I18nContext";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const addToCart = useCartStore((s) => s.addItem);
-  const { lang } = useI18n();
+  const showToast = useUIStore((s) => s.showToast); // ⬅ NUEVO
+  const { lang, t } = useI18n();
 
   const [product, setProduct] = useState(null);
   const [prices, setPrices] = useState([]);
@@ -36,7 +38,9 @@ export default function ProductDetail() {
   const [aiAdviceError, setAiAdviceError] = useState("");
   const [aiAdvice, setAiAdvice] = useState("");
 
+  // ============================
   // Cargar producto + precios + nutrición
+  // ============================
   useEffect(() => {
     async function load() {
       const p = await fetchProductById(id);
@@ -57,7 +61,10 @@ export default function ProductDetail() {
       } catch (err) {
         console.error("Error cargando nutrición:", err);
         setNutrition(null);
-        setNutritionError("No se pudo cargar la información nutricional.");
+        setNutritionError(
+          t("productDetail.nutritionLoading") ||
+            "No se pudo cargar la información nutricional."
+        );
       } finally {
         setLoadingNutrition(false);
       }
@@ -69,12 +76,13 @@ export default function ProductDetail() {
       setAiAdviceError("");
     }
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   if (!product) {
     return (
       <div className="pt-32 text-center text-red-400">
-        Cargando producto...
+        {t("productDetail.loadingProduct")}
       </div>
     );
   }
@@ -98,6 +106,11 @@ export default function ProductDetail() {
       store_name: selectedStore.store_name,
       store_logo: selectedStore.store_logo,
     });
+
+    // ⬅ Toast al agregar
+    showToast(t("toast.addedToCart"), "success");
+    // Si aún no tienes la key en i18n, puedes probar así:
+    // showToast("Producto agregado al carrito", "success");
   }
 
   function handleQuantityChange(delta) {
@@ -115,10 +128,15 @@ export default function ProductDetail() {
       setNutritionError("");
       await importNutritionFromOFF(id);
       const n = await fetchNutritionByProductId(id);
-      setNutrition(n);
+      if (!n) {
+        setNutrition(null);
+        setNutritionError(t("productDetail.nutritionEmpty"));
+      } else {
+        setNutrition(n);
+      }
     } catch (err) {
       console.error("Error importando nutrición:", err);
-      setNutritionError(err.message || "Error al importar nutrición.");
+      setNutritionError(err.message || t("productDetail.nutritionLoading"));
     } finally {
       setLoadingNutrition(false);
     }
@@ -137,7 +155,12 @@ export default function ProductDetail() {
       if (!resp.ok) {
         setAiSubs([]);
         setAiSubsError(
-          resp.error || "No se pudo obtener sustitutos con IA."
+          resp.error ||
+            (lang === "en"
+              ? "Could not get AI substitutes."
+              : lang === "pt"
+              ? "Não foi possível obter substitutos com IA."
+              : "No se pudo obtener sustitutos con IA.")
         );
         return;
       }
@@ -146,7 +169,13 @@ export default function ProductDetail() {
     } catch (err) {
       console.error("handleFetchAiSubstitutes error:", err);
       setAiSubs([]);
-      setAiSubsError("Error inesperado al consultar IA.");
+      setAiSubsError(
+        lang === "en"
+          ? "Unexpected error calling AI."
+          : lang === "pt"
+          ? "Erro inesperado ao chamar a IA."
+          : "Error inesperado al consultar IA."
+      );
     } finally {
       setAiSubsLoading(false);
     }
@@ -156,7 +185,6 @@ export default function ProductDetail() {
   // IA – Consejo nutricional
   // ============================
   async function handleFetchAiAdvice() {
-    // Validamos que haya nutrición antes de llamar a la IA
     if (!product || !nutrition) {
       const msg =
         lang === "es"
@@ -196,7 +224,6 @@ export default function ProductDetail() {
 
       const { summary, risk_label, health_score, advice } = resp.advice;
 
-      // Construimos un texto legible según idioma
       let text = summary || "";
 
       if (risk_label) {
@@ -250,19 +277,60 @@ export default function ProductDetail() {
     }
   }
 
+  // ============================
+  // Tabla nutricional (i18n)
+  // ============================
   function renderNutritionRows() {
     if (!nutrition) return null;
 
+    const labelsByLang = {
+      es: {
+        calories: "Calorías",
+        protein: "Proteínas",
+        fat: "Grasas",
+        carbs: "Carbohidratos",
+        sugar: "Azúcares",
+        fiber: "Fibra",
+        salt: "Sal",
+        nutriscore: "NutriScore",
+        nova: "NOVA",
+      },
+      en: {
+        calories: "Calories",
+        protein: "Proteins",
+        fat: "Fat",
+        carbs: "Carbohydrates",
+        sugar: "Sugars",
+        fiber: "Fiber",
+        salt: "Salt",
+        nutriscore: "NutriScore",
+        nova: "NOVA",
+      },
+      pt: {
+        calories: "Calorias",
+        protein: "Proteínas",
+        fat: "Gorduras",
+        carbs: "Carboidratos",
+        sugar: "Açúcares",
+        fiber: "Fibra",
+        salt: "Sal",
+        nutriscore: "NutriScore",
+        nova: "NOVA",
+      },
+    };
+
+    const L = labelsByLang[lang] || labelsByLang.es;
+
     const rows = [
-      { label: "Calorías", value: nutrition.calories_kcal_100g ?? "-" },
-      { label: "Proteínas", value: nutrition.protein_g_100g ?? "-" },
-      { label: "Grasas", value: nutrition.fat_g_100g ?? "-" },
-      { label: "Carbohidratos", value: nutrition.carbs_g_100g ?? "-" },
-      { label: "Azúcares", value: nutrition.sugar_g_100g ?? "-" },
-      { label: "Fibra", value: nutrition.fiber_g_100g ?? "-" },
-      { label: "Sal", value: nutrition.salt_g_100g ?? "-" },
-      { label: "NutriScore", value: nutrition.nutriscore_grade ?? "-" },
-      { label: "NOVA", value: nutrition.nova_group ?? "-" },
+      { label: L.calories, value: nutrition.calories_kcal_100g ?? "-" },
+      { label: L.protein, value: nutrition.protein_g_100g ?? "-" },
+      { label: L.fat, value: nutrition.fat_g_100g ?? "-" },
+      { label: L.carbs, value: nutrition.carbs_g_100g ?? "-" },
+      { label: L.sugar, value: nutrition.sugar_g_100g ?? "-" },
+      { label: L.fiber, value: nutrition.fiber_g_100g ?? "-" },
+      { label: L.salt, value: nutrition.salt_g_100g ?? "-" },
+      { label: L.nutriscore, value: nutrition.nutriscore_grade ?? "-" },
+      { label: L.nova, value: nutrition.nova_group ?? "-" },
     ];
 
     return rows.map((row) => (
@@ -277,6 +345,49 @@ export default function ProductDetail() {
       </div>
     ));
   }
+
+  // Textos IA botones
+  const subsButtonLabel = aiSubsLoading
+    ? lang === "en"
+      ? "Searching AI substitutes..."
+      : lang === "pt"
+      ? "Buscando substitutos com IA..."
+      : "Buscando sustitutos IA..."
+    : lang === "en"
+    ? "See AI substitutes"
+    : lang === "pt"
+    ? "Ver substitutos com IA"
+    : "Ver sustitutos con IA";
+
+  const adviceButtonLabel = aiAdviceLoading
+    ? lang === "en"
+      ? "Getting AI nutrition advice..."
+      : lang === "pt"
+      ? "Obtendo recomendação nutricional IA..."
+      : "Obteniendo recomendación IA..."
+    : lang === "en"
+    ? "AI nutrition advice"
+    : lang === "pt"
+    ? "Recomendação nutricional IA"
+    : "Recomendación nutricional IA";
+
+  // Label de unidad normalizada (i18n)
+  const unitIsGram = String(product.size_unit || "")
+    .toLowerCase()
+    .includes("g");
+
+  const per100Label =
+    lang === "en"
+      ? unitIsGram
+        ? "/ 100 g"
+        : "/ 100 ml"
+      : lang === "pt"
+      ? unitIsGram
+        ? "/ 100 g"
+        : "/ 100 ml"
+      : unitIsGram
+      ? "/ 100 g"
+      : "/ 100 ml";
 
   return (
     <div className="max-w-7xl mx-auto px-6 pt-32 grid grid-cols-1 md:grid-cols-3 gap-10">
@@ -296,7 +407,9 @@ export default function ProductDetail() {
         {/* Cantidad + botón agregar */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-slate-300 text-sm">Cantidad</span>
+            <span className="text-slate-300 text-sm">
+              {t("productDetail.quantity")}
+            </span>
             <div className="flex items-center gap-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1">
               <button
                 type="button"
@@ -320,11 +433,14 @@ export default function ProductDetail() {
 
           <button
             onClick={handleAdd}
-            className="bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold px-6 py-2 rounded-lg"
+            className="bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold px-4 py-2 rounded-lg"
           >
             {selectedStore
-              ? `Agregar desde ${selectedStore.store_name}`
-              : "Agregar al carrito"}
+              ? t("productDetail.addFromStore").replace(
+                  "{{store}}",
+                  selectedStore.store_name || ""
+                )
+              : t("productDetail.addToCart")}
           </button>
         </div>
 
@@ -332,7 +448,7 @@ export default function ProductDetail() {
         <div className="mt-4 bg-slate-900 border border-slate-700 rounded-xl p-4 space-y-3">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-sm font-semibold text-white">
-              Información nutricional (por 100 g/ml)
+              {t("productDetail.nutritionTitle")}
             </h2>
 
             <button
@@ -341,7 +457,9 @@ export default function ProductDetail() {
               className="text-xs px-3 py-1 rounded-lg border border-emerald-500 text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={loadingNutrition}
             >
-              {loadingNutrition ? "Actualizando..." : "Obtener desde OFF"}
+              {loadingNutrition
+                ? t("productDetail.nutritionUpdating")
+                : t("productDetail.nutritionFromOFF")}
             </button>
           </div>
 
@@ -353,6 +471,12 @@ export default function ProductDetail() {
             <div className="mt-1 text-xs">{renderNutritionRows()}</div>
           )}
 
+          {!nutrition && !loadingNutrition && !nutritionError && (
+            <p className="text-[11px] text-slate-400">
+              {t("productDetail.nutritionEmpty")}
+            </p>
+          )}
+
           {/* IA – Botones */}
           <div className="mt-3 flex flex-wrap gap-2">
             <button
@@ -361,9 +485,7 @@ export default function ProductDetail() {
               disabled={aiSubsLoading}
               className="text-xs px-3 py-1 rounded-lg border border-emerald-500 text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {aiSubsLoading
-                ? "Buscando sustitutos IA..."
-                : "Ver sustitutos con IA"}
+              {subsButtonLabel}
             </button>
 
             <button
@@ -372,9 +494,7 @@ export default function ProductDetail() {
               disabled={aiAdviceLoading}
               className="text-xs px-3 py-1 rounded-lg border border-sky-500 text-sky-400 hover:bg-sky-500/10 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {aiAdviceLoading
-                ? "Obteniendo recomendación IA..."
-                : "Recomendación nutricional IA"}
+              {adviceButtonLabel}
             </button>
           </div>
 
@@ -396,7 +516,11 @@ export default function ProductDetail() {
           {aiSubs.length > 0 && (
             <div className="mt-3">
               <p className="text-[11px] text-slate-400 mb-1">
-                Sugerencias de sustitutos:
+                {lang === "en"
+                  ? "Suggested substitutes:"
+                  : lang === "pt"
+                  ? "Sugestões de substitutos:"
+                  : "Sugerencias de sustitutos:"}
               </p>
 
               <div className="space-y-2">
@@ -413,17 +537,32 @@ export default function ProductDetail() {
                     </p>
 
                     <p className="text-[10px] text-slate-400 mt-1">
-                      Motivo saludable:
-                      <span className="text-slate-300"> {s.health_reason}</span>
+                      {lang === "en"
+                        ? "Health reason:"
+                        : lang === "pt"
+                        ? "Motivo saudável:"
+                        : "Motivo saludable:"}
+                      <span className="text-slate-300">
+                        {" "}
+                        {s.health_reason}
+                      </span>
                     </p>
 
                     <p className="text-[10px] text-slate-400 mt-1">
-                      Precio:
+                      {lang === "en"
+                        ? "Price:"
+                        : lang === "pt"
+                        ? "Preço:"
+                        : "Precio:"}
                       <span className="text-slate-300"> {s.price_hint}</span>
                     </p>
 
                     <p className="text-[10px] text-slate-400 mt-1">
-                      Disponibilidad:
+                      {lang === "en"
+                        ? "Availability:"
+                        : lang === "pt"
+                        ? "Disponibilidade:"
+                        : "Disponibilidad:"}
                       <span className="text-slate-300">
                         {" "}
                         {s.availability_hint}
@@ -431,7 +570,11 @@ export default function ProductDetail() {
                     </p>
 
                     <p className="text-[10px] text-slate-400 mt-1">
-                      Categoría:
+                      {lang === "en"
+                        ? "Category:"
+                        : lang === "pt"
+                        ? "Categoria:"
+                        : "Categoría:"}
                       <span className="text-slate-300"> {s.category}</span>
                     </p>
                   </div>
@@ -445,11 +588,17 @@ export default function ProductDetail() {
       {/* Columna derecha: precios */}
       <div className="md:col-span-1 bg-slate-900 border border-slate-700 rounded-xl p-5 flex flex-col gap-4">
         <h2 className="text-xl font-semibold mb-3 text-white">
-          Precios por supermercado
+          {t("productDetail.pricesTitle")}
         </h2>
 
         {prices.length === 0 && (
-          <p className="text-slate-500">Sin precios disponibles todavía.</p>
+          <p className="text-slate-500">
+            {lang === "en"
+              ? "No prices available yet."
+              : lang === "pt"
+              ? "Ainda não há preços disponíveis."
+              : "Sin precios disponibles todavía."}
+          </p>
         )}
 
         {prices.map((store) => {
@@ -466,32 +615,31 @@ export default function ProductDetail() {
                   : "bg-slate-800 border border-slate-700 hover:bg-slate-700"
               }`}
             >
-              <div className="flex items-center gap-3">
+              {/* Izquierda: logo + nombre (alineados verticalmente) */}
+              <div className="flex items-center gap-3 flex-1 min-w-0">
                 <img
                   src={store.store_logo}
                   alt={store.store_name}
                   className="w-10 h-10 rounded-lg object-contain bg-white p-1"
                 />
 
-                <div>
-                  <span className="text-slate-200 font-medium">
+                <div className="flex flex-col justify-center min-w-0">
+                  <span className="text-slate-200 font-medium truncate">
                     {store.store_name}
                   </span>
 
                   {store.normalized_price && (
-                    <span className="text-xs text-slate-400 block">
-                      ${store.normalized_price.toLocaleString("es-CL")} / 100{" "}
-                      {String(product.size_unit || "")
-                        .toLowerCase()
-                        .includes("g")
-                        ? "g"
-                        : "ml"}
+                    <span className="text-xs text-slate-400">
+                      $
+                      {store.normalized_price.toLocaleString("es-CL")}{" "}
+                      {per100Label}
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="text-right">
+              {/* Derecha: precio total */}
+              <div className="text-right ml-3">
                 <span className="text-emerald-400 font-bold text-lg">
                   ${store.price.toLocaleString("es-CL")}
                 </span>
