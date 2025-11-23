@@ -16,10 +16,13 @@ export default function AuthCallback() {
 
     async function handleCallback() {
       try {
-        const { data, error } = await supabase.auth.getSession();
+        // 1) Procesar el fragmento de la URL y guardar sesión en supabase-js
+        const { data, error } = await supabase.auth.getSessionFromUrl({
+          storeSession: true,
+        });
 
         if (error) {
-          console.error("Error obteniendo sesión de Supabase:", error);
+          console.error("Error en getSessionFromUrl:", error);
           if (!cancelled) navigate("/login");
           return;
         }
@@ -33,6 +36,7 @@ export default function AuthCallback() {
           return;
         }
 
+        // 2) Payload para tu backend
         const payload = {
           provider: "google",
           supabase_user_id: user.id,
@@ -47,6 +51,7 @@ export default function AuthCallback() {
             null,
         };
 
+        // 3) Llamar a tu backend para emitir tu propio JWT
         const res = await fetch(`${API_URL}/auth/login-oauth`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -69,6 +74,7 @@ export default function AuthCallback() {
           return;
         }
 
+        // 4) Guardar auth en el store y redirigir al home
         setAuth({
           user: safeUser,
           token,
