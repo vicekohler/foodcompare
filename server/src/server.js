@@ -12,12 +12,12 @@ import storesRouter from "./routes/stores.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import cartRoutes from "./routes/cart.routes.js";
 import uploadRoutes from "./routes/upload.routes.js";
-import aiRouter from "./routes/ai.routes.js"; // IA (Gemini)
+import aiRouter from "./routes/ai.routes.js";
 
 const app = express();
 
 /* ============================================
-   FIX PARA EVITAR RESPUESTAS 304 / CACHE
+   DISABLE CACHE (evita 304)
    ============================================ */
 app.disable("etag");
 app.set("etag", false);
@@ -33,19 +33,30 @@ app.use((req, res, next) => {
 });
 
 /* ============================================
-   MIDDLEWARES
+   CORS CONFIG (SOLO ESTO ES LO IMPORTANTE)
    ============================================ */
 
-// Origen de producción configurable por ENV (para Render/Vercel)
-const FRONTEND_ORIGIN =
-  process.env.FRONTEND_ORIGIN || "https://tu-frontend.vercel.app";
+// ORIGENES PERMITIDOS
+// - localhost para desarrollo
+// - frontend en producción (variable en Render)
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.FRONTEND_ORIGIN,   // ejemplo: https://foodcompare.vercel.app
+].filter(Boolean); // elimina undefined
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173", // desarrollo
-      FRONTEND_ORIGIN, // producción (Vercel u otro dominio)
-    ],
+    origin: function (origin, callback) {
+      // Permitir peticiones sin origin (como Postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.warn("CORS bloqueado para origen:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
@@ -70,10 +81,10 @@ app.use("/api/prices", pricesRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/cart", cartRoutes);
 app.use("/api/upload", uploadRoutes);
-app.use("/api/ai", aiRouter); // rutas de IA (sustitutos + nutrición)
+app.use("/api/ai", aiRouter);
 
 /* ============================================
-   404 POR DEFECTO
+   404
    ============================================ */
 app.use((_req, res) => res.status(404).json({ error: "Not found" }));
 
