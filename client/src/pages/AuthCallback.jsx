@@ -16,19 +16,27 @@ export default function AuthCallback() {
 
     async function handleCallback() {
       try {
-        // 1) Procesar el fragmento de la URL y guardar sesión en supabase-js
-        const { data, error } = await supabase.auth.getSessionFromUrl({
-          storeSession: true,
-        });
+        // Pequeño loop por si la sesión tarda un poco en aparecer
+        let session = null;
+        let user = null;
 
-        if (error) {
-          console.error("Error en getSessionFromUrl:", error);
-          if (!cancelled) navigate("/login");
-          return;
+        for (let i = 0; i < 3; i++) {
+          const { data, error } = await supabase.auth.getSession();
+
+          if (error) {
+            console.error("Error obteniendo sesión de Supabase:", error);
+            if (!cancelled) navigate("/login");
+            return;
+          }
+
+          session = data?.session;
+          user = session?.user;
+
+          if (user) break;
+
+          // espera corta antes de reintentar
+          await new Promise((r) => setTimeout(r, 300));
         }
-
-        const session = data?.session;
-        const user = session?.user;
 
         if (!session || !user) {
           console.warn("No hay sesión de Supabase en callback");
@@ -36,7 +44,6 @@ export default function AuthCallback() {
           return;
         }
 
-        // 2) Payload para tu backend
         const payload = {
           provider: "google",
           supabase_user_id: user.id,
@@ -51,7 +58,6 @@ export default function AuthCallback() {
             null,
         };
 
-        // 3) Llamar a tu backend para emitir tu propio JWT
         const res = await fetch(`${API_URL}/auth/login-oauth`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -74,7 +80,7 @@ export default function AuthCallback() {
           return;
         }
 
-        // 4) Guardar auth en el store y redirigir al home
+        // Guardamos sesión en el store
         setAuth({
           user: safeUser,
           token,
