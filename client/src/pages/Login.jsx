@@ -47,9 +47,9 @@ export default function Login() {
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
+        // Dejamos que Supabase use el Site URL / redirect configurado
+        // Si quieres forzar /auth/callback:
+        // options: { redirectTo: `${window.location.origin}/auth/callback` }
       });
 
       if (error) {
@@ -57,7 +57,7 @@ export default function Login() {
         setError(t("login.googleError"));
         setLoadingGoogle(false);
       }
-      // Éxito: redirige y este componente deja de existir.
+      // En éxito, Supabase redirige y este componente deja de existir.
     } catch (err) {
       console.error("Error en handleLoginWithGoogle:", err);
       setError(t("login.googleUnexpected"));
