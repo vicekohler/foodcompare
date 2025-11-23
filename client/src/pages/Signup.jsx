@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { signupRequest } from "../lib/api";
+import { useI18n } from "../i18n/I18nContext";
 
 // misma lógica que backend para fuerza de password
 function isStrongPassword(password) {
@@ -14,7 +15,8 @@ function isStrongPassword(password) {
   return { hasMinLength, hasLower, hasUpper, hasNumber, hasSpecial };
 }
 
-function getPasswordStrengthLabel(password) {
+// devolvemos una key para i18n + la clase
+function getPasswordStrength(password) {
   const { hasMinLength, hasLower, hasUpper, hasNumber, hasSpecial } =
     isStrongPassword(password);
 
@@ -26,19 +28,21 @@ function getPasswordStrengthLabel(password) {
   if (hasSpecial) score++;
 
   if (password.length === 0) {
-    return { label: "Sin contraseña", className: "text-slate-500" };
+    return { key: "none", className: "text-slate-500" };
   }
 
   if (score <= 2) {
-    return { label: "Débil", className: "text-red-400" };
+    return { key: "weak", className: "text-red-400" };
   } else if (score === 3 || score === 4) {
-    return { label: "Media", className: "text-yellow-400" };
+    return { key: "medium", className: "text-yellow-400" };
   } else {
-    return { label: "Fuerte", className: "text-emerald-400" };
+    return { key: "strong", className: "text-emerald-400" };
   }
 }
 
 export default function Signup() {
+  const { t } = useI18n();
+
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
@@ -51,7 +55,7 @@ export default function Signup() {
 
   const navigate = useNavigate();
 
-  const strength = getPasswordStrengthLabel(password);
+  const strength = getPasswordStrength(password);
   const pwChecks = isStrongPassword(password);
 
   async function handleSubmit(e) {
@@ -59,14 +63,12 @@ export default function Signup() {
     setError("");
 
     if (!name || !lastName || !email || !password || !password2) {
-      setError(
-        "Nombre, apellido, email y ambas contraseñas son obligatorios"
-      );
+      setError(t("signup.errors.requiredFields"));
       return;
     }
 
     if (password !== password2) {
-      setError("Las contraseñas no coinciden");
+      setError(t("signup.errors.passwordsNoMatch"));
       return;
     }
 
@@ -80,9 +82,7 @@ export default function Signup() {
       !hasNumber ||
       !hasSpecial
     ) {
-      setError(
-        "La contraseña debe tener mínimo 8 caracteres, incluir mayúsculas, minúsculas, números y un carácter especial."
-      );
+      setError(t("signup.errors.passwordPolicy"));
       return;
     }
 
@@ -94,7 +94,7 @@ export default function Signup() {
       email,
       password,
       phone,
-      avatarUrl: null, // no se pide en el registro
+      avatarUrl: null,
     });
 
     setLoading(false);
@@ -105,8 +105,8 @@ export default function Signup() {
         data?.error ||
         data?.message ||
         (status === 409
-          ? "Ya existe una cuenta con ese email"
-          : "No se pudo crear la cuenta");
+          ? t("signup.errors.emailExists")
+          : t("signup.errors.default"));
       console.error("Signup error:", status, data);
       setError(msg);
       return;
@@ -118,13 +118,15 @@ export default function Signup() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 pt-20">
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl">
-        <h1 className="text-2xl font-bold mb-6">Crear cuenta</h1>
+        <h1 className="text-2xl font-bold mb-6">{t("signup.title")}</h1>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           {/* Nombre */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm mb-1">Nombre</label>
+              <label className="block text-sm mb-1">
+                {t("signup.nameLabel")}
+              </label>
               <input
                 type="text"
                 className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-emerald-500"
@@ -135,7 +137,9 @@ export default function Signup() {
             </div>
 
             <div>
-              <label className="block text-sm mb-1">Apellido</label>
+              <label className="block text-sm mb-1">
+                {t("signup.lastNameLabel")}
+              </label>
               <input
                 type="text"
                 className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-emerald-500"
@@ -148,7 +152,9 @@ export default function Signup() {
 
           {/* Teléfono */}
           <div>
-            <label className="block text-sm mb-1">Teléfono (opcional)</label>
+            <label className="block text-sm mb-1">
+              {t("signup.phoneLabel")}
+            </label>
             <input
               type="tel"
               className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-emerald-500"
@@ -160,7 +166,9 @@ export default function Signup() {
 
           {/* Email */}
           <div>
-            <label className="block text-sm mb-1">Email</label>
+            <label className="block text-sm mb-1">
+              {t("signup.emailLabel")}
+            </label>
             <input
               type="email"
               className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-emerald-500"
@@ -172,7 +180,9 @@ export default function Signup() {
 
           {/* Contraseña */}
           <div>
-            <label className="block text-sm mb-1">Contraseña</label>
+            <label className="block text-sm mb-1">
+              {t("signup.passwordLabel")}
+            </label>
             <input
               type="password"
               className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-emerald-500"
@@ -182,23 +192,39 @@ export default function Signup() {
             />
             <div className="mt-1 text-xs flex items-center justify-between">
               <span className={strength.className}>
-                Seguridad: {strength.label}
+                {t("signup.passwordStrength.prefix")}{" "}
+                {t(`signup.passwordStrength.${strength.key}`)}
               </span>
             </div>
             <ul className="mt-1 text-[11px] text-slate-400 space-y-0.5">
               <li>
-                {pwChecks.hasMinLength ? "✅" : "⚪"} Mínimo 8 caracteres
+                {pwChecks.hasMinLength ? "✅" : "⚪"}{" "}
+                {t("signup.passwordChecklist.minLength")}
               </li>
-              <li>{pwChecks.hasLower ? "✅" : "⚪"} Una minúscula</li>
-              <li>{pwChecks.hasUpper ? "✅" : "⚪"} Una mayúscula</li>
-              <li>{pwChecks.hasNumber ? "✅" : "⚪"} Un número</li>
-              <li>{pwChecks.hasSpecial ? "✅" : "⚪"} Un carácter especial</li>
+              <li>
+                {pwChecks.hasLower ? "✅" : "⚪"}{" "}
+                {t("signup.passwordChecklist.lower")}
+              </li>
+              <li>
+                {pwChecks.hasUpper ? "✅" : "⚪"}{" "}
+                {t("signup.passwordChecklist.upper")}
+              </li>
+              <li>
+                {pwChecks.hasNumber ? "✅" : "⚪"}{" "}
+                {t("signup.passwordChecklist.number")}
+              </li>
+              <li>
+                {pwChecks.hasSpecial ? "✅" : "⚪"}{" "}
+                {t("signup.passwordChecklist.special")}
+              </li>
             </ul>
           </div>
 
           {/* Confirmar contraseña */}
           <div>
-            <label className="block text-sm mb-1">Confirmar contraseña</label>
+            <label className="block text-sm mb-1">
+              {t("signup.password2Label")}
+            </label>
             <input
               type="password"
               className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-emerald-500"
@@ -219,17 +245,17 @@ export default function Signup() {
             disabled={loading}
             className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed text-slate-900 font-semibold py-2 rounded-lg transition"
           >
-            {loading ? "Creando cuenta..." : "Registrarme"}
+            {loading ? t("signup.buttonLoading") : t("signup.buttonSubmit")}
           </button>
         </form>
 
         <p className="mt-4 text-xs text-slate-400">
-          ¿Ya tienes cuenta?{" "}
+          {t("signup.alreadyAccount")}{" "}
           <Link
             to="/login"
             className="text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline"
           >
-            Inicia sesión
+            {t("signup.loginLink")}
           </Link>
         </p>
       </div>

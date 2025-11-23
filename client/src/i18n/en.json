@@ -11,18 +11,17 @@
     "cart": "Cart"
   },
   "home": {
-  "title": {
-    "base": "Best of the week (demo dataset)",
-    "search": "Results for \"{{term}}\"",
-    "searchInCategory": "Results for \"{{term}}\" in {{category}}",
-    "category": "Category: {{category}}"
-  },
-  "errorLoading": "Products could not be loaded. Check that the server is running.",
-  "emptyDataset": "There are no products in the dataset. Is /api/products returning empty?",
-  "categoryAll": "All",
-  "loading": "Loading products...",
-  "noResults": "We couldn't find products for these filters."
-  
+    "title": {
+      "base": "Best of the week (demo dataset)",
+      "search": "Results for \"{{term}}\"",
+      "searchInCategory": "Results for \"{{term}}\" in {{category}}",
+      "category": "Category: {{category}}"
+    },
+    "errorLoading": "Products could not be loaded. Check that the server is running.",
+    "emptyDataset": "There are no products in the dataset. Is /api/products returning empty?",
+    "categoryAll": "All",
+    "loading": "Loading products...",
+    "noResults": "We couldn't find products for these filters."
   },
   "productCard": {
     "viewPrices": "View prices"
@@ -52,7 +51,113 @@
     "pay": "Pay",
     "seeSavings": "View savings"
   },
+  "cartDrawer": {
+    "title": "Cart",
+    "close": "Close",
+    "empty": "You haven't added any products yet.",
+    "fallbackStoreName": "Supermarket",
+    "viewSavings": "View savings",
+    "totalLabel": "Total:",
+    "clear": "Clear",
+    "checkout": "Checkout",
+    "remove": "Remove"
+  },
+  "cartSavings": {
+    "title": "Comparison by supermarket",
+    "close": "Close",
+    "emptyCart": "Add products to the cart to see potential savings.",
+    "loading": "Calculating prices at supermarkets...",
+    "totalSavedLabel": "Estimated total savings",
+    "currentCheaper": "With your current combination you save compared to buying everything at {{store}}.",
+    "storeCheaper": "If you buy everything at {{store}} you could save compared to your current combination.",
+    "samePrice": "Your purchase costs the same as buying everything at {{store}}.",
+    "currentCart": "Your current cart: ${{total}}.",
+    "allInStore": "Buying EVERYTHING at {{store}} would cost ${{total}}.",
+    "table": {
+      "store": "Supermarket",
+      "total": "Cart total"
+    },
+    "error": "We couldn't compute the supermarket comparison."
+  },
   "toast": {
     "addedToCart": "Product added to cart"
+  },
+  "login": {
+    "title": "Sign in",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "errorDefault": "Could not sign in",
+    "buttonLoading": "Signing in...",
+    "buttonSubmit": "Sign in",
+    "or": "or",
+    "googleButton": "Continue with Google",
+    "googleLoading": "Redirecting to Google...",
+    "googleError": "Could not sign in with Google",
+    "googleUnexpected": "Unexpected error while signing in with Google",
+    "noAccount": "Don't have an account?",
+    "signupLink": "Sign up"
+  },
+  "signup": {
+    "title": "Create account",
+    "nameLabel": "First name",
+    "lastNameLabel": "Last name",
+    "phoneLabel": "Phone (optional)",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "password2Label": "Confirm password",
+    "buttonLoading": "Creating account...",
+    "buttonSubmit": "Sign up",
+    "alreadyAccount": "Already have an account?",
+    "loginLink": "Sign in",
+    "passwordStrength": {
+      "prefix": "Strength:",
+      "none": "No password",
+      "weak": "Weak",
+      "medium": "Medium",
+      "strong": "Strong"
+    },
+    "passwordChecklist": {
+      "minLength": "At least 8 characters",
+      "lower": "One lowercase letter",
+      "upper": "One uppercase letter",
+      "number": "One number",
+      "special": "One special character"
+    },
+    "errors": {
+      "requiredFields": "First name, last name, email and both passwords are required",
+      "passwordsNoMatch": "Passwords do not match",
+      "passwordPolicy": "Password must have at least 8 characters and include uppercase, lowercase, numbers and a special character.",
+      "emailExists": "An account with this email already exists",
+      "default": "Could not create the account"
+    }
+  },
+  "authCallback": {
+    "processing": "Processing Google login..."
+  },
+  "profile": {
+    "loading": "Loading profile...",
+    "title": "My profile",
+    "avatarHint": "Click the circle to change your profile photo",
+    "avatarNote": "JPG/PNG, maximum 2 MB.",
+    "uploading": "uploading...",
+    "nameLabel": "First name",
+    "lastNameLabel": "Last name",
+    "emailLabel": "Email",
+    "emailNote": "Email cannot be modified here.",
+    "phoneLabel": "Phone",
+    "saving": "Saving...",
+    "saveButton": "Save changes",
+    "errors": {
+      "loadProfile": "Could not load profile from server",
+      "unexpectedLoad": "Unexpected error loading profile",
+      "updateProfile": "Could not update profile",
+      "unexpectedUpdate": "Unexpected error updating profile",
+      "uploadAvatar": "Could not upload image",
+      "unexpectedUploadAvatar": "Unexpected error uploading image"
+    },
+    "messages": {
+      "profileUpdated": "Profile updated successfully.",
+      "avatarUpdated": "Profile photo updated."
+    }
   }
 }

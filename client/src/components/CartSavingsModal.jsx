@@ -2,8 +2,16 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { fetchCartQuote } from "../lib/api";
+import { useI18n } from "../i18n/I18nContext";
 
-export default function CartSavingsModal({ open, onClose, items, currentTotal }) {
+export default function CartSavingsModal({
+  open,
+  onClose,
+  items,
+  currentTotal,
+}) {
+  const { t, tFmt } = useI18n();
+
   const [loading, setLoading] = useState(false);
   const [quote, setQuote] = useState(null); // { by_store, best_store }
   const hasItems = items && items.length > 0;
@@ -41,16 +49,22 @@ export default function CartSavingsModal({ open, onClose, items, currentTotal })
   let savingsAmount = null;
 
   if (bestStore) {
-    const diff = bestStore.total - currentTotal; // >0 => tu combinación es más barata
+    const diff = bestStore.total - currentTotal; // >0 → tu combinación actual es más barata
     if (diff > 0) {
       savingsAmount = diff;
-      savingsText = `Con tu combinación actual ahorras frente a comprar todo en ${bestStore.store_name}.`;
+      savingsText = tFmt("cartSavings.currentCheaper", {
+        store: bestStore.store_name,
+      });
     } else if (diff < 0) {
       savingsAmount = Math.abs(diff);
-      savingsText = `Si compras todo en ${bestStore.store_name} podrías ahorrar frente a tu combinación actual.`;
+      savingsText = tFmt("cartSavings.storeCheaper", {
+        store: bestStore.store_name,
+      });
     } else {
       savingsAmount = 0;
-      savingsText = `Tu compra cuesta lo mismo que comprar todo en ${bestStore.store_name}.`;
+      savingsText = tFmt("cartSavings.samePrice", {
+        store: bestStore.store_name,
+      });
     }
   }
 
@@ -59,26 +73,26 @@ export default function CartSavingsModal({ open, onClose, items, currentTotal })
       <div className="w-full max-w-md rounded-2xl bg-slate-950 border border-slate-800 shadow-2xl p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold text-white">
-            Comparación por supermercado
+            {t("cartSavings.title")}
           </h3>
           <button
             type="button"
             onClick={onClose}
             className="text-slate-400 hover:text-slate-200 text-sm"
           >
-            Cerrar
+            {t("cartSavings.close")}
           </button>
         </div>
 
         {!hasItems && (
           <p className="text-sm text-slate-400">
-            Agrega productos al carrito para ver el ahorro potencial.
+            {t("cartSavings.emptyCart")}
           </p>
         )}
 
         {hasItems && loading && (
           <p className="text-sm text-slate-400">
-            Calculando precios en los supermercados...
+            {t("cartSavings.loading")}
           </p>
         )}
 
@@ -89,7 +103,7 @@ export default function CartSavingsModal({ open, onClose, items, currentTotal })
               <div className="mb-4 rounded-xl bg-slate-900 border border-emerald-500/50 px-3 py-2">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-semibold text-emerald-400">
-                    Total ahorrado estimado
+                    {t("cartSavings.totalSavedLabel")}
                   </span>
                   <span className="text-sm font-semibold text-slate-100">
                     ${savingsAmount?.toLocaleString("es-CL") ?? "0"}
@@ -97,18 +111,14 @@ export default function CartSavingsModal({ open, onClose, items, currentTotal })
                 </div>
                 <p className="text-[11px] text-slate-300">{savingsText}</p>
                 <p className="mt-1 text-[11px] text-slate-500">
-                  Tu carrito actual:{" "}
-                  <span className="font-semibold">
-                    ${currentTotal.toLocaleString("es-CL")}
-                  </span>
-                  .<br />
-                  Comprar TODO en{" "}
-                  <span className="font-semibold">{bestStore.store_name}</span>{" "}
-                  costaría{" "}
-                  <span className="font-semibold">
-                    ${bestStore.total.toLocaleString("es-CL")}
-                  </span>
-                  .
+                  {tFmt("cartSavings.currentCart", {
+                    total: currentTotal.toLocaleString("es-CL"),
+                  })}
+                  <br />
+                  {tFmt("cartSavings.allInStore", {
+                    store: bestStore.store_name,
+                    total: bestStore.total.toLocaleString("es-CL"),
+                  })}
                 </p>
               </div>
             )}
@@ -116,12 +126,13 @@ export default function CartSavingsModal({ open, onClose, items, currentTotal })
             {/* Tabla por supermercado */}
             <div className="rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
               <div className="px-3 py-2 border-b border-slate-800 text-xs text-slate-400 flex justify-between">
-                <span>Supermercado</span>
-                <span>Total carrito</span>
+                <span>{t("cartSavings.table.store")}</span>
+                <span>{t("cartSavings.table.total")}</span>
               </div>
               <div className="divide-y divide-slate-800">
                 {quote.by_store?.map((s) => {
-                  const isBest = bestStore && s.store_id === bestStore.store_id;
+                  const isBest =
+                    bestStore && s.store_id === bestStore.store_id;
                   return (
                     <div
                       key={s.store_id}
@@ -152,7 +163,7 @@ export default function CartSavingsModal({ open, onClose, items, currentTotal })
 
         {hasItems && !loading && !quote && (
           <p className="text-sm text-red-400 mt-2">
-            No se pudo calcular la comparación de supermercados.
+            {t("cartSavings.error")}
           </p>
         )}
       </div>

@@ -4,8 +4,11 @@ import { useNavigate, Link } from "react-router-dom";
 import { loginRequest } from "../lib/api";
 import useAuthStore from "../store/useAuthStore";
 import { supabase } from "../lib/supabaseClient";
+import { useI18n } from "../i18n/I18nContext";
 
 export default function Login() {
+  const { t } = useI18n();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -25,7 +28,7 @@ export default function Login() {
     setLoading(false);
 
     if (!resp.ok) {
-      setError(resp.error || "No se pudo iniciar sesión");
+      setError(resp.error || t("login.errorDefault"));
       return;
     }
 
@@ -51,13 +54,13 @@ export default function Login() {
 
       if (error) {
         console.error("Error en signInWithOAuth:", error);
-        setError("No se pudo iniciar sesión con Google");
+        setError(t("login.googleError"));
         setLoadingGoogle(false);
       }
-      // En el caso exitoso, el navegador se redirige y este componente deja de existir.
+      // Éxito: redirige y este componente deja de existir.
     } catch (err) {
       console.error("Error en handleLoginWithGoogle:", err);
-      setError("Error inesperado al iniciar sesión con Google");
+      setError(t("login.googleUnexpected"));
       setLoadingGoogle(false);
     }
   }
@@ -65,12 +68,14 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 pt-20">
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl">
-        <h1 className="text-2xl font-bold mb-6">Iniciar sesión</h1>
+        <h1 className="text-2xl font-bold mb-6">{t("login.title")}</h1>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           {/* Email */}
           <div>
-            <label className="block text-sm mb-1">Email</label>
+            <label className="block text-sm mb-1">
+              {t("login.emailLabel")}
+            </label>
             <input
               type="email"
               className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-emerald-500"
@@ -82,7 +87,9 @@ export default function Login() {
 
           {/* Contraseña */}
           <div>
-            <label className="block text-sm mb-1">Contraseña</label>
+            <label className="block text-sm mb-1">
+              {t("login.passwordLabel")}
+            </label>
             <input
               type="password"
               className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-emerald-500"
@@ -103,14 +110,16 @@ export default function Login() {
             disabled={loading || loadingGoogle}
             className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed text-slate-900 font-semibold py-2 rounded-lg transition"
           >
-            {loading ? "Ingresando..." : "Ingresar"}
+            {loading ? t("login.buttonLoading") : t("login.buttonSubmit")}
           </button>
         </form>
 
         {/* Separador */}
         <div className="mt-4 flex items-center gap-2">
           <div className="flex-1 h-px bg-slate-700" />
-          <span className="text-[11px] text-slate-400">o</span>
+          <span className="text-[11px] text-slate-400">
+            {t("login.or")}
+          </span>
           <div className="flex-1 h-px bg-slate-700" />
         </div>
 
@@ -121,16 +130,18 @@ export default function Login() {
           disabled={loadingGoogle || loading}
           className="mt-4 w-full border border-slate-700 hover:border-emerald-500 text-slate-100 text-sm py-2 rounded-lg flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed transition"
         >
-          {loadingGoogle ? "Redirigiendo a Google..." : "Continuar con Google"}
+          {loadingGoogle
+            ? t("login.googleLoading")
+            : t("login.googleButton")}
         </button>
 
         <p className="mt-4 text-xs text-slate-400">
-          ¿No tienes cuenta?{" "}
+          {t("login.noAccount")}{" "}
           <Link
             to="/signup"
             className="text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline"
           >
-            Regístrate
+            {t("login.signupLink")}
           </Link>
         </p>
       </div>

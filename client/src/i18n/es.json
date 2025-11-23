@@ -11,18 +11,17 @@
     "cart": "Carrito"
   },
   "home": {
-  "title": {
-    "base": "Lo mejor de la semana (dataset demo)",
-    "search": "Resultados para \"{{term}}\"",
-    "searchInCategory": "Resultados para \"{{term}}\" en {{category}}",
-    "category": "Categoría: {{category}}"
-  },
-  "errorLoading": "No se pudieron cargar los productos. Revisa que el servidor esté arriba.",
-  "emptyDataset": "No hay productos en el dataset. ¿La respuesta de /api/products viene vacía?",
-  "categoryAll": "Todas",
-  "loading": "Cargando productos...",
-  "noResults": "No encontramos productos para estos filtros."
-  
+    "title": {
+      "base": "Lo mejor de la semana (dataset demo)",
+      "search": "Resultados para \"{{term}}\"",
+      "searchInCategory": "Resultados para \"{{term}}\" en {{category}}",
+      "category": "Categoría: {{category}}"
+    },
+    "errorLoading": "No se pudieron cargar los productos. Revisa que el servidor esté arriba.",
+    "emptyDataset": "No hay productos en el dataset. ¿La respuesta de /api/products viene vacía?",
+    "categoryAll": "Todas",
+    "loading": "Cargando productos...",
+    "noResults": "No encontramos productos para estos filtros."
   },
   "productCard": {
     "viewPrices": "Ver precios"
@@ -52,11 +51,113 @@
     "pay": "Pagar",
     "seeSavings": "Ver ahorro"
   },
+  "cartDrawer": {
+    "title": "Carrito",
+    "close": "Cerrar",
+    "empty": "Aún no has agregado productos.",
+    "fallbackStoreName": "Supermercado",
+    "viewSavings": "Ver ahorro",
+    "totalLabel": "Total:",
+    "clear": "Vaciar",
+    "checkout": "Pagar",
+    "remove": "Quitar"
+  },
+  "cartSavings": {
+    "title": "Comparación por supermercado",
+    "close": "Cerrar",
+    "emptyCart": "Agrega productos al carrito para ver el ahorro potencial.",
+    "loading": "Calculando precios en los supermercados...",
+    "totalSavedLabel": "Total ahorrado estimado",
+    "currentCheaper": "Con tu combinación actual ahorras frente a comprar todo en {{store}}.",
+    "storeCheaper": "Si compras todo en {{store}} podrías ahorrar frente a tu combinación actual.",
+    "samePrice": "Tu compra cuesta lo mismo que comprar todo en {{store}}.",
+    "currentCart": "Tu carrito actual: ${{total}}.",
+    "allInStore": "Comprar TODO en {{store}} costaría ${{total}}.",
+    "table": {
+      "store": "Supermercado",
+      "total": "Total carrito"
+    },
+    "error": "No se pudo calcular la comparación de supermercados."
+  },
   "toast": {
     "addedToCart": "Producto agregado al carrito"
- }
-
-
+  },
+  "login": {
+    "title": "Iniciar sesión",
+    "emailLabel": "Email",
+    "passwordLabel": "Contraseña",
+    "errorDefault": "No se pudo iniciar sesión",
+    "buttonLoading": "Ingresando...",
+    "buttonSubmit": "Ingresar",
+    "or": "o",
+    "googleButton": "Continuar con Google",
+    "googleLoading": "Redirigiendo a Google...",
+    "googleError": "No se pudo iniciar sesión con Google",
+    "googleUnexpected": "Error inesperado al iniciar sesión con Google",
+    "noAccount": "¿No tienes cuenta?",
+    "signupLink": "Regístrate"
+  },
+  "signup": {
+    "title": "Crear cuenta",
+    "nameLabel": "Nombre",
+    "lastNameLabel": "Apellido",
+    "phoneLabel": "Teléfono (opcional)",
+    "emailLabel": "Email",
+    "passwordLabel": "Contraseña",
+    "password2Label": "Confirmar contraseña",
+    "buttonLoading": "Creando cuenta...",
+    "buttonSubmit": "Registrarme",
+    "alreadyAccount": "¿Ya tienes cuenta?",
+    "loginLink": "Inicia sesión",
+    "passwordStrength": {
+      "prefix": "Seguridad:",
+      "none": "Sin contraseña",
+      "weak": "Débil",
+      "medium": "Media",
+      "strong": "Fuerte"
+    },
+    "passwordChecklist": {
+      "minLength": "Mínimo 8 caracteres",
+      "lower": "Una minúscula",
+      "upper": "Una mayúscula",
+      "number": "Un número",
+      "special": "Un carácter especial"
+    },
+    "errors": {
+      "requiredFields": "Nombre, apellido, email y ambas contraseñas son obligatorios",
+      "passwordsNoMatch": "Las contraseñas no coinciden",
+      "passwordPolicy": "La contraseña debe tener mínimo 8 caracteres, incluir mayúsculas, minúsculas, números y un carácter especial.",
+      "emailExists": "Ya existe una cuenta con ese email",
+      "default": "No se pudo crear la cuenta"
+    }
+  },
+  "profile": {
+    "loading": "Cargando perfil...",
+    "title": "Mi perfil",
+    "avatarHint": "Haz clic en el círculo para cambiar tu foto de perfil",
+    "avatarNote": "JPG/PNG, máximo 2 MB.",
+    "uploading": "subiendo...",
+    "nameLabel": "Nombre",
+    "lastNameLabel": "Apellido",
+    "emailLabel": "Email",
+    "emailNote": "El email no se puede modificar desde aquí.",
+    "phoneLabel": "Teléfono",
+    "saving": "Guardando...",
+    "saveButton": "Guardar cambios",
+    "errors": {
+      "loadProfile": "No se pudo cargar el perfil desde el servidor",
+      "unexpectedLoad": "Error inesperado al cargar el perfil",
+      "updateProfile": "No se pudo actualizar el perfil",
+      "unexpectedUpdate": "Error inesperado al actualizar el perfil",
+      "uploadAvatar": "No se pudo subir la imagen",
+      "unexpectedUploadAvatar": "Error inesperado al subir la imagen"
+    },
+    "messages": {
+      "profileUpdated": "Perfil actualizado correctamente.",
+      "avatarUpdated": "Foto de perfil actualizada."
+    }
+  },
+  "authCallback": {
+    "processing": "Procesando login con Google..."
+  }
 }
-
-

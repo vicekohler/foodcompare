@@ -1,10 +1,13 @@
 // src/components/CartDrawer.jsx
+import { useState } from "react";
 import useCartStore from "../store/useCartStore";
 import useUIStore from "../store/useUIStore";
-import { useState } from "react";
 import CartSavingsModal from "./CartSavingsModal";
+import { useI18n } from "../i18n/I18nContext";
 
 export default function CartDrawer() {
+  const { t } = useI18n();
+
   const isOpen = useUIStore((s) => s.isCartOpen);
   const closeCart = useUIStore((s) => s.closeCart);
 
@@ -24,7 +27,7 @@ export default function CartDrawer() {
       if (!acc[storeId]) {
         acc[storeId] = {
           storeId,
-          storeName: it.store_name || "Supermercado",
+          storeName: it.store_name || t("cartDrawer.fallbackStoreName"),
           storeLogo: it.store_logo || "",
           items: [],
           total: 0,
@@ -53,13 +56,15 @@ export default function CartDrawer() {
         <div className="h-full w-full max-w-sm bg-slate-950 border-l border-slate-800 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
-            <h2 className="text-lg font-semibold text-white">Carrito</h2>
+            <h2 className="text-lg font-semibold text-white">
+              {t("cartDrawer.title")}
+            </h2>
             <button
               type="button"
               onClick={closeCart}
               className="text-slate-400 hover:text-slate-200 text-sm"
             >
-              Cerrar
+              {t("cartDrawer.close")}
             </button>
           </div>
 
@@ -67,7 +72,7 @@ export default function CartDrawer() {
           <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
             {storeGroups.length === 0 && (
               <p className="text-slate-500 text-sm">
-                Aún no has agregado productos.
+                {t("cartDrawer.empty")}
               </p>
             )}
 
@@ -97,7 +102,8 @@ export default function CartDrawer() {
                 <div className="divide-y divide-slate-800">
                   {group.items.map((item) => {
                     const productId = item.product_id ?? item.id;
-                    const lineTotal = (item.unit_price || 0) * (item.qty || 0);
+                    const lineTotal =
+                      (item.unit_price || 0) * (item.qty || 0);
 
                     return (
                       <div
@@ -168,7 +174,7 @@ export default function CartDrawer() {
                             }
                             className="text-[11px] text-slate-500 hover:text-red-400"
                           >
-                            Quitar
+                            {t("cartDrawer.remove")}
                           </button>
                         </div>
                       </div>
@@ -188,11 +194,13 @@ export default function CartDrawer() {
                 onClick={() => setOpenSavings(true)}
                 className="text-emerald-400 hover:text-emerald-300 text-sm font-medium"
               >
-                Ver ahorro
+                {t("cartDrawer.viewSavings")}
               </button>
 
               <div className="flex items-center gap-1">
-                <span className="text-slate-400">Total:</span>
+                <span className="text-slate-400">
+                  {t("cartDrawer.totalLabel")}
+                </span>
                 <span className="text-emerald-400 font-semibold">
                   ${cartTotal.toLocaleString("es-CL")}
                 </span>
@@ -205,13 +213,13 @@ export default function CartDrawer() {
                 onClick={clearCart}
                 className="flex-1 border border-slate-700 text-slate-200 rounded-lg py-2 text-sm hover:bg-slate-800"
               >
-                Vaciar
+                {t("cartDrawer.clear")}
               </button>
               <button
                 type="button"
                 className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-slate-900 rounded-lg py-2 text-sm font-semibold"
               >
-                Pagar
+                {t("cartDrawer.checkout")}
               </button>
             </div>
           </div>

@@ -4,17 +4,18 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import useAuthStore from "../store/useAuthStore";
 import { API_URL } from "../lib/api";
+import { useI18n } from "../i18n/I18nContext";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
+  const { t } = useI18n();
 
   useEffect(() => {
     let cancelled = false;
 
     async function handleCallback() {
       try {
-        // Supabase ya procesó el hash y guardó la sesión en storage
         const { data, error } = await supabase.auth.getSession();
 
         if (error) {
@@ -36,14 +37,16 @@ export default function AuthCallback() {
           provider: "google",
           supabase_user_id: user.id,
           email: user.email,
-          name: user.user_metadata?.full_name || user.user_metadata?.name || "",
+          name:
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            "",
           avatar_url:
             user.user_metadata?.avatar_url ||
             user.user_metadata?.picture ||
             null,
         };
 
-        // Backend: crea/busca usuario y devuelve JWT + perfil
         const res = await fetch(`${API_URL}/auth/login-oauth`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -87,7 +90,7 @@ export default function AuthCallback() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50">
-      <p className="text-slate-300">Procesando login con Google...</p>
+      <p className="text-slate-300">{t("authCallback.processing")}</p>
     </div>
   );
 }

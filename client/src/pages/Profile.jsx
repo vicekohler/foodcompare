@@ -3,8 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/useAuthStore";
 import { fetchProfile, updateProfile, uploadAvatar } from "../lib/api";
+import { useI18n } from "../i18n/I18nContext";
 
 export default function Profile() {
+  const { t } = useI18n();
   const navigate = useNavigate();
 
   const user = useAuthStore((s) => s.user);
@@ -25,14 +27,14 @@ export default function Profile() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = useRef(null);
 
-  /* ========== 1) Si no hay sesión, mandar al login ========== */
+  // 1) Si no hay sesión, mandar al login
   useEffect(() => {
     if (!token) {
       navigate("/login");
     }
   }, [token, navigate]);
 
-  /* ========== 2) Prefill rápido desde el store ========== */
+  // 2) Prefill rápido desde el store
   useEffect(() => {
     if (!user) return;
 
@@ -43,7 +45,7 @@ export default function Profile() {
     setAvatarUrl(user.avatar_url || "");
   }, [user]);
 
-  /* ========== 3) Cargar perfil desde el backend una sola vez por token ========== */
+  // 3) Cargar perfil desde backend
   useEffect(() => {
     let cancelled = false;
 
@@ -65,7 +67,7 @@ export default function Profile() {
 
         if (!resp || !resp.ok) {
           setError(
-            resp?.error || "No se pudo cargar el perfil desde el servidor"
+            resp?.error || t("profile.errors.loadProfile")
           );
           return;
         }
@@ -78,7 +80,6 @@ export default function Profile() {
         setPhone(u.phone || "");
         setAvatarUrl(u.avatar_url || "");
 
-        // Actualizar store con la versión más fresca
         setAuth({
           user: u,
           token,
@@ -86,7 +87,7 @@ export default function Profile() {
       } catch (err) {
         console.error("Error en loadProfile:", err);
         if (!cancelled) {
-          setError("Error inesperado al cargar el perfil");
+          setError(t("profile.errors.unexpectedLoad"));
         }
       } finally {
         if (!cancelled) {
@@ -100,9 +101,8 @@ export default function Profile() {
     return () => {
       cancelled = true;
     };
-  }, [token, setAuth]); // 👈 OJO: aquí ya NO depende de `user`
+  }, [token, setAuth, t]);
 
-  /* ========== Guardar cambios de perfil ========== */
   async function handleSave(e) {
     e.preventDefault();
     if (!token) return;
@@ -123,7 +123,7 @@ export default function Profile() {
       console.log("Profile.jsx updateProfile resp:", resp);
 
       if (!resp || !resp.ok) {
-        setError(resp?.error || "No se pudo actualizar el perfil");
+        setError(resp?.error || t("profile.errors.updateProfile"));
         return;
       }
 
@@ -134,16 +134,15 @@ export default function Profile() {
         token,
       });
 
-      setSavedMsg("Perfil actualizado correctamente.");
+      setSavedMsg(t("profile.messages.profileUpdated"));
     } catch (err) {
       console.error("Error en handleSave:", err);
-      setError("Error inesperado al actualizar el perfil");
+      setError(t("profile.errors.unexpectedUpdate"));
     } finally {
       setSaving(false);
     }
   }
 
-  /* ========== Manejo de avatar ========== */
   function handleAvatarClick() {
     if (fileInputRef.current) {
       fileInputRef.current.click();
@@ -163,7 +162,7 @@ export default function Profile() {
       console.log("handleAvatarChange uploadAvatar resp:", resp);
 
       if (!resp.ok || !resp.url) {
-        setError(resp.error || "No se pudo subir la imagen");
+        setError(resp.error || t("profile.errors.uploadAvatar"));
         return;
       }
 
@@ -177,10 +176,10 @@ export default function Profile() {
         token,
       });
 
-      setSavedMsg("Foto de perfil actualizada.");
+      setSavedMsg(t("profile.messages.avatarUpdated"));
     } catch (err) {
       console.error("Error en handleAvatarChange:", err);
-      setError("Error inesperado al subir la imagen");
+      setError(t("profile.errors.unexpectedUploadAvatar"));
     } finally {
       setUploadingAvatar(false);
       if (fileInputRef.current) {
@@ -196,7 +195,7 @@ export default function Profile() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 pt-20">
-        <p className="text-slate-300">Cargando perfil...</p>
+        <p className="text-slate-300">{t("profile.loading")}</p>
       </div>
     );
   }
@@ -233,13 +232,13 @@ export default function Profile() {
           />
 
           <div>
-            <h1 className="text-2xl font-bold">Mi perfil</h1>
+            <h1 className="text-2xl font-bold">{t("profile.title")}</h1>
             <p className="text-sm text-slate-400">
-              Haz clic en el círculo para cambiar tu foto de perfil
-              {uploadingAvatar ? " (subiendo...)" : ""}.
+              {t("profile.avatarHint")}
+              {uploadingAvatar ? ` (${t("profile.uploading")})` : ""}
             </p>
             <p className="text-[11px] text-slate-500">
-              JPG/PNG, máximo 2&nbsp;MB.
+              {t("profile.avatarNote")}
             </p>
           </div>
         </div>
@@ -248,7 +247,9 @@ export default function Profile() {
           {/* Nombre / Apellido */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm mb-1">Nombre</label>
+              <label className="block text-sm mb-1">
+                {t("profile.nameLabel")}
+              </label>
               <input
                 type="text"
                 className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-emerald-500"
@@ -259,7 +260,9 @@ export default function Profile() {
             </div>
 
             <div>
-              <label className="block text-sm mb-1">Apellido</label>
+              <label className="block text-sm mb-1">
+                {t("profile.lastNameLabel")}
+              </label>
               <input
                 type="text"
                 className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-emerald-500"
@@ -272,7 +275,9 @@ export default function Profile() {
 
           {/* Email (solo lectura) */}
           <div>
-            <label className="block text-sm mb-1">Email</label>
+            <label className="block text-sm mb-1">
+              {t("profile.emailLabel")}
+            </label>
             <input
               type="email"
               className="w-full rounded-lg bg-slate-950 border border-slate-800 px-3 py-2 text-sm outline-none text-slate-400"
@@ -280,13 +285,15 @@ export default function Profile() {
               readOnly
             />
             <p className="mt-1 text-xs text-slate-500">
-              El email no se puede modificar desde aquí.
+              {t("profile.emailNote")}
             </p>
           </div>
 
           {/* Teléfono */}
           <div>
-            <label className="block text-sm mb-1">Teléfono</label>
+            <label className="block text-sm mb-1">
+              {t("profile.phoneLabel")}
+            </label>
             <input
               type="tel"
               className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-emerald-500"
@@ -314,7 +321,7 @@ export default function Profile() {
               disabled={saving || uploadingAvatar}
               className="bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed text-slate-900 font-semibold px-6 py-2 rounded-lg transition"
             >
-              {saving ? "Guardando..." : "Guardar cambios"}
+              {saving ? t("profile.saving") : t("profile.saveButton")}
             </button>
           </div>
         </form>
