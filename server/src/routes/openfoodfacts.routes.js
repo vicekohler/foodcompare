@@ -51,18 +51,29 @@ function mapOFF(p) {
 
 async function fetchOFFProduct(ean) {
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 15000);
+  const timeout = setTimeout(() => ctrl.abort(), 15000);
+
+  const urls = [
+    `https://cl.openfoodfacts.org/api/v2/product/${encodeURIComponent(ean)}.json`,
+    `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(ean)}.json`,
+  ];
 
   try {
-    const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(
-      ean
-    )}.json`;
-    const r = await fetch(url, { signal: ctrl.signal });
-    return await r.json();
+    for (const url of urls) {
+      const r = await fetch(url, { signal: ctrl.signal });
+      if (!r.ok) continue;
+
+      const j = await r.json();
+      // status = 1 significa encontrado
+      if (j && j.status === 1) return j;
+    }
+
+    return null; // no encontrado en ninguna API
   } finally {
-    clearTimeout(t);
+    clearTimeout(timeout);
   }
 }
+
 
 /* ========== GET espejo OFF (mapeado) ========== */
 router.get("/ean/:ean", async (req, res) => {

@@ -430,3 +430,20 @@ export async function importNutritionFromOFF(productId) {
     };
   }
 }
+
+
+/* =========================
+ *  BUSCADOR
+ * ========================= */
+export async function searchProducts(query) {
+  const data = await safeFetch(`/products/search?q=${encodeURIComponent(query)}`);
+  return Array.isArray(data) ? data : [];
+}
+
+/* =========================
+ *  CATEGORÍAS
+ * ========================= */
+export async function fetchCategories() {
+  const data = await safeFetch(`/products/categories/list`);
+  return data?.categories ?? [];
+}
