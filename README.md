@@ -200,20 +200,20 @@ La aplicación utiliza **Google Gemini 1.5 Flash** para:
 
 ### 📌 client/.env
 ```
-VITE_API_URL=https://foodcompare-api.onrender.com
-VITE_SUPABASE_URL=TU_URL
-VITE_SUPABASE_ANON_KEY=TU_ANON_KEY
+- VITE_API_URL=https://foodcompare-api.onrender.com
+- VITE_SUPABASE_URL=TU_URL
+- VITE_SUPABASE_ANON_KEY=TU_ANON_KEY
 ```
 
 ### 📌 server/.env
 ```
-PORT=4000
-FRONTEND_ORIGIN=https://foodcompare-cl.vercel.app
-SUPABASE_URL=TU_URL
-SUPABASE_SERVICE_KEY=TU_SERVICE_KEY
-JWT_SECRET=CLAVE_SECRETA
-GEMINI_API_KEY=TU_GEMINI_KEY
-NODE_ENV=production
+- PORT=4000
+- FRONTEND_ORIGIN=https://foodcompare-cl.vercel.app
+- SUPABASE_URL=TU_URL
+- SUPABASE_SERVICE_KEY=TU_SERVICE_KEY
+- JWT_SECRET=CLAVE_SECRETA
+- GEMINI_API_KEY=TU_GEMINI_KEY
+- NODE_ENV=production
 ```
 
 ---
