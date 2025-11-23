@@ -123,11 +123,11 @@ La plataforma funciona en:
 
 ### Rutas principales:
 ```
-/api/products
-/api/prices
-/api/auth
-/api/upload
-/api/ai
+- /api/products
+- /api/prices
+- /api/auth
+- /api/upload
+- /api/ai
 ```
 
 Incluye:
