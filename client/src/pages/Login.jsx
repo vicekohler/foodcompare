@@ -18,6 +18,9 @@ export default function Login() {
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
 
+  /* ===========================
+     LOGIN NORMAL
+  ============================ */
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
@@ -40,16 +43,21 @@ export default function Login() {
     navigate("/");
   }
 
-  // 🔥 CORREGIDO: redirige SIEMPRE a /auth/callback
+  /* ===========================
+     LOGIN CON GOOGLE (CORREGIDO)
+  ============================ */
   async function handleLoginWithGoogle() {
     try {
       setError("");
       setLoadingGoogle(true);
 
+      // FORZAMOS el redirect EXACTO a /auth/callback
+      const redirectTo = `${window.location.origin}/auth/callback`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo,
         },
       });
 
@@ -58,7 +66,8 @@ export default function Login() {
         setError(t("login.googleError"));
         setLoadingGoogle(false);
       }
-      // En éxito, Supabase redirige a /auth/callback
+
+      // Si no hay error → Supabase redirige automáticamente.
     } catch (err) {
       console.error("Error en handleLoginWithGoogle:", err);
       setError(t("login.googleUnexpected"));
@@ -74,9 +83,7 @@ export default function Login() {
         <form className="space-y-4" onSubmit={handleSubmit}>
           {/* Email */}
           <div>
-            <label className="block text-sm mb-1">
-              {t("login.emailLabel")}
-            </label>
+            <label className="block text-sm mb-1">{t("login.emailLabel")}</label>
             <input
               type="email"
               className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-emerald-500"
@@ -88,9 +95,7 @@ export default function Login() {
 
           {/* Contraseña */}
           <div>
-            <label className="block text-sm mb-1">
-              {t("login.passwordLabel")}
-            </label>
+            <label className="block text-sm mb-1">{t("login.passwordLabel")}</label>
             <input
               type="password"
               className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-emerald-500"
@@ -118,9 +123,7 @@ export default function Login() {
         {/* Separador */}
         <div className="mt-4 flex items-center gap-2">
           <div className="flex-1 h-px bg-slate-700" />
-          <span className="text-[11px] text-slate-400">
-            {t("login.or")}
-          </span>
+          <span className="text-[11px] text-slate-400">{t("login.or")}</span>
           <div className="flex-1 h-px bg-slate-700" />
         </div>
 
@@ -131,9 +134,7 @@ export default function Login() {
           disabled={loadingGoogle || loading}
           className="mt-4 w-full border border-slate-700 hover:border-emerald-500 text-slate-100 text-sm py-2 rounded-lg flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed transition"
         >
-          {loadingGoogle
-            ? t("login.googleLoading")
-            : t("login.googleButton")}
+          {loadingGoogle ? t("login.googleLoading") : t("login.googleButton")}
         </button>
 
         <p className="mt-4 text-xs text-slate-400">
