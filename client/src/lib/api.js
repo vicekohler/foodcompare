@@ -86,12 +86,6 @@ export async function fetchBestPriceComparison(id) {
  *  AUTENTICACIÓN
  * ========================= */
 
-/**
- * Signup
- * Backend: POST /api/auth/signup
- * Body: { name, last_name, email, password, phone? }
- * Devuelve: { ok, status, data, error }
- */
 export async function signupRequest({
   name,
   lastName,
@@ -137,9 +131,6 @@ export async function signupRequest({
   }
 }
 
-/**
- * Login
- */
 export async function loginRequest({ email, password }) {
   const url = `${API_URL}/auth/login`;
 
@@ -214,7 +205,7 @@ export async function loginRequest({ email, password }) {
 }
 
 /* =========================
- *  PERFIL DE USUARIO
+ *  PERFIL
  * ========================= */
 
 export async function fetchProfile(token) {
@@ -223,39 +214,25 @@ export async function fetchProfile(token) {
   try {
     const res = await fetch(url, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
 
     const body = await res.json().catch(() => null);
-    console.log("fetchProfile /auth/me body:", body);
 
     if (!res.ok) {
       const errorMessage = body?.error || body?.message || `HTTP ${res.status}`;
-      return {
-        ok: false,
-        status: res.status,
-        error: errorMessage,
-        data: null,
-      };
+      return { ok: false, status: res.status, error: errorMessage, data: null };
     }
 
-    const user = body?.user || body;
     return {
       ok: true,
       status: res.status,
+      data: body?.user || body,
       error: null,
-      data: user,
     };
   } catch (err) {
     console.error("Error de red en fetchProfile:", err);
-    return {
-      ok: false,
-      status: 0,
-      error: "Error de conexión con el servidor",
-      data: null,
-    };
+    return { ok: false, status: 0, data: null, error: "Red" };
   }
 }
 
@@ -273,46 +250,28 @@ export async function updateProfile(token, payload) {
     });
 
     const body = await res.json().catch(() => null);
-    console.log("updateProfile /auth/me body:", body);
 
     if (!res.ok) {
       const errorMessage = body?.error || body?.message || `HTTP ${res.status}`;
-      return {
-        ok: false,
-        status: res.status,
-        error: errorMessage,
-        data: null,
-      };
+      return { ok: false, status: res.status, error: errorMessage, data: null };
     }
 
-    const user = body?.user || body;
     return {
       ok: true,
       status: res.status,
+      data: body?.user || body,
       error: null,
-      data: user,
     };
   } catch (err) {
     console.error("Error de red en updateProfile:", err);
-    return {
-      ok: false,
-      status: 0,
-      error: "Error de conexión con el servidor",
-      data: null,
-    };
+    return { ok: false, status: 0, error: "Red", data: null };
   }
 }
 
 /* =========================
- *  UPLOAD AVATAR
+ *  AVATAR
  * ========================= */
 
-/**
- * POST /api/upload/avatar
- * Header: Authorization: Bearer <token>
- * Body: multipart/form-data con campo "avatar"
- * Respuesta: { ok, url }
- */
 export async function uploadAvatar(token, file) {
   const url = `${API_URL}/upload/avatar`;
 
@@ -322,30 +281,21 @@ export async function uploadAvatar(token, file) {
   try {
     const res = await fetch(url, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // NO ponemos Content-Type, lo maneja el navegador
-      },
+      headers: { Authorization: `Bearer ${token}` },
       body: formData,
     });
 
     const body = await res.json().catch(() => null);
-    console.log("uploadAvatar resp:", body);
 
     if (!res.ok || !body?.url) {
       const errorMessage = body?.error || body?.message || `HTTP ${res.status}`;
       return { ok: false, status: res.status, error: errorMessage, url: null };
     }
 
-    return { ok: true, status: res.status, error: null, url: body.url };
+    return { ok: true, status: res.status, url: body.url, error: null };
   } catch (err) {
-    console.error("Error de red en uploadAvatar:", err);
-    return {
-      ok: false,
-      status: 0,
-      error: "Error de conexión con el servidor",
-      url: null,
-    };
+    console.error("uploadAvatar error:", err);
+    return { ok: false, status: 0, error: "Red", url: null };
   }
 }
 
@@ -353,10 +303,6 @@ export async function uploadAvatar(token, file) {
  *  NUTRICIÓN
  * ========================= */
 
-/**
- * GET /api/products/:id/nutrition
- * Devuelve la fila de "nutrition" para ese producto, o null si no hay.
- */
 export async function fetchNutritionByProductId(productId) {
   if (!productId) return null;
 
@@ -364,100 +310,67 @@ export async function fetchNutritionByProductId(productId) {
 
   try {
     const res = await fetch(url);
-    if (res.status === 404) {
-      // Producto sin nutrición todavía
-      return null;
-    }
-    if (!res.ok) {
-      console.error("Error HTTP en fetchNutritionByProductId:", res.status);
-      return null;
-    }
+    if (res.status === 404) return null;
+
+    if (!res.ok) return null;
+
     const data = await res.json().catch(() => null);
     return data;
   } catch (err) {
-    console.error("Error de red en fetchNutritionByProductId:", err);
+    console.error("Error de red en fetchNutrition:", err);
     return null;
   }
 }
 
-/**
- * POST /api/openfoodfacts/products/:id/fetch-nutrition
- * Llama a OFF desde el backend y hace upsert en "nutrition" para product_id = id.
- */
 export async function importNutritionFromOFF(productId) {
-  if (!productId) {
-    return {
-      ok: false,
-      status: 0,
-      error: "Falta productId",
-      data: null,
-    };
-  }
+  if (!productId) return { ok: false, error: "Falta productId" };
 
-  const url = `${API_URL}/openfoodfacts/products/${productId}/fetch-nutrition`;
+  const url = `${API_URL}/openfoodfacts/products/${productId}/fetch-nutrition}`;
 
   try {
-    const res = await fetch(url, {
-      method: "POST",
-    });
-
+    const res = await fetch(url, { method: "POST" });
     const body = await res.json().catch(() => null);
 
     if (!res.ok) {
-      const errorMessage = body?.error || `HTTP ${res.status}`;
-      console.error("importNutritionFromOFF error:", res.status, body);
       return {
         ok: false,
         status: res.status,
-        error: errorMessage,
+        error: body?.error || `HTTP ${res.status}`,
         data: body,
       };
     }
 
-    return {
-      ok: true,
-      status: res.status,
-      error: null,
-      data: body,
-    };
+    return { ok: true, status: res.status, data: body, error: null };
   } catch (err) {
-    console.error("Error de red en importNutritionFromOFF:", err);
-    return {
-      ok: false,
-      status: 0,
-      error: "Error de conexión con el servidor",
-      data: null,
-    };
+    console.error("importNutrition error:", err);
+    return { ok: false, status: 0, error: "Red", data: null };
   }
 }
-
 
 /* =========================
  *  BUSCADOR
  * ========================= */
+
 export async function searchProducts(query) {
-  const data = await safeFetch(`/products/search?q=${encodeURIComponent(query)}`);
+  const data = await safeFetch(
+    `/products/search?q=${encodeURIComponent(query)}`
+  );
   return Array.isArray(data) ? data : [];
 }
 
 /* =========================
  *  CATEGORÍAS
  * ========================= */
+
 export async function fetchCategories() {
   const data = await safeFetch(`/products/categories/list`);
   return data?.categories ?? [];
 }
 
 /* =========================
- *  COTIZACIÓN DE CARRITO
+ *  COTIZACIÓN CARRITO
  * ========================= */
 
-/**
- * Envía el carrito al backend para simular cuánto costaría
- * comprar TODO en cada supermercado.
- *
- * items: array de items del store, debe tener product_id y qty
- */
 export async function fetchCartQuote(items) {
   const url = `${API_URL}/prices/quote`;
 
@@ -480,9 +393,93 @@ export async function fetchCartQuote(items) {
       return null;
     }
 
-    return data; // { by_store, best_store }
+    return data;
   } catch (err) {
     console.error("fetchCartQuote network error:", err);
     return null;
+  }
+}
+
+/* =========================
+ *  IA – ACTUALIZADO
+ * ========================= */
+
+/**
+ * GET /api/ai/substitutes/:productId
+ */
+export async function fetchAiSubstitutes(productId, lang = "es") {
+  const url = `${API_URL}/ai/substitutes/${productId}?lang=${encodeURIComponent(
+    lang
+  )}`;
+
+  try {
+    const res = await fetch(url);
+
+    const json = await res.json().catch(() => null);
+
+    if (!res.ok) {
+      return {
+        ok: false,
+        status: res.status,
+        error: json?.error || `HTTP ${res.status}`,
+      };
+    }
+
+    return json;
+  } catch (err) {
+    console.error("fetchAiSubstitutes error:", err);
+    return {
+      ok: false,
+      status: 0,
+      error: "Error de conexión con el servidor (IA)",
+    };
+  }
+}
+
+/**
+ * POST /api/ai/nutrition-advice
+ * Body: { product, nutrition, userProfile, lang }
+ * Soporta i18n: lang = "es" | "en" | "pt"
+ */
+export async function fetchAiNutritionAdvice({
+  product,
+  nutrition,
+  lang = "es",
+  userProfile = null,
+}) {
+  const url = `${API_URL}/ai/nutrition-advice`;
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ product, nutrition, userProfile, lang }),
+    });
+
+    const body = await res.json().catch(() => null);
+
+    if (!res.ok) {
+      return {
+        ok: false,
+        status: res.status,
+        error: body?.error || `HTTP ${res.status}`,
+        advice: null,
+      };
+    }
+
+    return {
+      ok: body?.ok ?? true,
+      status: res.status,
+      error: null,
+      advice: body?.advice ?? null,
+    };
+  } catch (err) {
+    console.error("fetchAiNutritionAdvice network error:", err);
+    return {
+      ok: false,
+      status: 0,
+      error: "Error de conexión con el servidor (IA)",
+      advice: null,
+    };
   }
 }

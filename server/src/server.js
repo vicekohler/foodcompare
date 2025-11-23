@@ -12,24 +12,28 @@ import storesRouter from "./routes/stores.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import cartRoutes from "./routes/cart.routes.js";
 import uploadRoutes from "./routes/upload.routes.js";
+import aiRouter from "./routes/ai.routes.js"; // IA (Gemini)
 
 const app = express();
 
 /* ============================================
-   🔥 FIX DEFINITIVO PARA EVITAR 304 🔥
+   FIX PARA EVITAR RESPUESTAS 304 / CACHE
    ============================================ */
 app.disable("etag");
 app.set("etag", false);
 
 app.use((req, res, next) => {
-  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate"
+  );
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
   next();
 });
 
 /* ============================================
-   NORMAL MIDDLEWARES
+   MIDDLEWARES
    ============================================ */
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
@@ -52,11 +56,17 @@ app.use("/api/prices", pricesRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/cart", cartRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/ai", aiRouter); // rutas de IA (sustitutos + nutrición)
 
+/* ============================================
+   404 POR DEFECTO
+   ============================================ */
 app.use((_req, res) => res.status(404).json({ error: "Not found" }));
 
 /* ============================================
    SERVIDOR
    ============================================ */
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`API up on :${PORT}`));
+app.listen(PORT, () => {
+  console.log(`API up on :${PORT}`);
+});
