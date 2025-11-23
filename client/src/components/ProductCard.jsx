@@ -1,8 +1,11 @@
 // src/components/ProductCard.jsx
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
+import { useI18n } from "../i18n/I18nContext";
 
 export default function ProductCard({ product }) {
+  const { t } = useI18n();
+
   return (
     <Link
       to={`/product/${product.id}`}
@@ -47,7 +50,7 @@ export default function ProductCard({ product }) {
         type="button"
         className="mt-auto w-full py-1.5 bg-emerald-500 text-slate-900 rounded-lg text-sm font-semibold hover:bg-emerald-400"
       >
-        Ver precios
+        {t("productCard.viewPrices")}
       </button>
     </Link>
   );
@@ -59,6 +62,6 @@ ProductCard.propTypes = {
     name: PropTypes.string.isRequired,
     brand: PropTypes.string,
     image_url: PropTypes.string,
-    best_price: PropTypes.number,
-  }).isRequired,
+    best_price: PropTypes.number
+  }).isRequired
 };

@@ -1,0 +1,58 @@
+{
+  "app": {
+    "title": "FoodCompare CL"
+  },
+  "navbar": {
+    "searchPlaceholder": "Buscar produtos...",
+    "assistant": "Assistente",
+    "login": "Entrar",
+    "logout": "Sair",
+    "profile": "Perfil",
+    "cart": "Carrinho"
+  },
+  "home": {
+  "title": {
+    "base": "O melhor da semana (dataset demo)",
+    "search": "Resultados para \"{{term}}\"",
+    "searchInCategory": "Resultados para \"{{term}}\" em {{category}}",
+    "category": "Categoria: {{category}}"
+  },
+  "errorLoading": "Não foi possível carregar os produtos. Verifique se o servidor está ativo.",
+  "emptyDataset": "Não há produtos no dataset. A resposta de /api/products está vazia?",
+  "categoryAll": "Todas",
+  "loading": "Carregando produtos...",
+  "noResults": "Não encontramos produtos para estes filtros."
+  
+  },
+  "productCard": {
+    "viewPrices": "Ver preços"
+  },
+  "productDetail": {
+    "quantity": "Quantidade",
+    "addFromStore": "Adicionar de {{store}}",
+    "addToCart": "Adicionar ao carrinho",
+    "sizeLabel": "Tamanho",
+    "nutritionTitle": "Informação nutricional (por 100 g/ml)",
+    "nutritionFromOFF": "Obter do OFF",
+    "nutritionUpdating": "Atualizando...",
+    "nutritionLoading": "Carregando informação nutricional...",
+    "nutritionEmpty": "Ainda não temos informação nutricional para este produto. Você pode obtê-la do OpenFoodFacts.",
+    "nutritionAllergens": "Alérgenos:",
+    "nutritionIngredients": "Ingredientes:",
+    "pricesTitle": "Preços por supermercado",
+    "loadingProduct": "Carregando produto..."
+  },
+  "cart": {
+    "title": "Carrinho",
+    "close": "Fechar",
+    "empty": "Você ainda não adicionou produtos.",
+    "remove": "Remover",
+    "total": "Total:",
+    "clear": "Esvaziar",
+    "pay": "Pagar",
+    "seeSavings": "Ver economia"
+  },
+  "toast": {
+    "addedToCart": "Produto adicionado ao carrinho"
+  }
+}

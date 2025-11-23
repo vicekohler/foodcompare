@@ -5,7 +5,6 @@ import { useEffect, useRef } from "react";
 import Navbar from "./components/Navbar";
 import CartDrawer from "./components/CartDrawer";
 import ChatDrawer from "./components/ChatDrawer";
-import Toast from "./components/Toast"; // 👈 NUEVO
 
 import Home from "./pages/Home";
 import ProductDetail from "./pages/ProductDetail";
@@ -16,6 +15,7 @@ import AuthCallback from "./pages/AuthCallback";
 
 import useAuthStore from "./store/useAuthStore";
 import useCartStore from "./store/useCartStore";
+import { I18nProvider } from "./i18n/I18nContext";
 
 export default function App() {
   // Auth
@@ -24,10 +24,8 @@ export default function App() {
 
   // Carrito
   const items = useCartStore((s) => s.items);
-
   const prevOwnerRef = useRef(null);
 
-  // 1) Cargar auth al montar
   useEffect(() => {
     loadFromStorage();
   }, [loadFromStorage]);
@@ -36,7 +34,7 @@ export default function App() {
     return ownerId ? `fc_cart_${ownerId}` : "fc_cart_guest";
   }
 
-  // 2) Cambio de usuario => swap de carrito
+  // swap de carrito al cambiar de usuario
   useEffect(() => {
     const currentOwnerId = user?.id || null;
     const prevOwnerId = prevOwnerRef.current;
@@ -72,7 +70,7 @@ export default function App() {
     prevOwnerRef.current = currentOwnerId;
   }, [user?.id]);
 
-  // 3) Persistir carrito
+  // persistir carrito
   useEffect(() => {
     const currentOwnerId = user?.id || null;
     const key = getCartKey(currentOwnerId);
@@ -85,23 +83,24 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-slate-950 text-slate-50">
-        <Navbar />
-        <CartDrawer />
-        <ChatDrawer />
-        <Toast /> {/* 👈 Toast global */}
+      <I18nProvider>
+        <div className="min-h-screen bg-slate-950 text-slate-50">
+          <Navbar />
+          <CartDrawer />
+          <ChatDrawer />
 
-        <main className="pt-20">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
-          </Routes>
-        </main>
-      </div>
+          <main className="pt-20">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+            </Routes>
+          </main>
+        </div>
+      </I18nProvider>
     </BrowserRouter>
   );
 }

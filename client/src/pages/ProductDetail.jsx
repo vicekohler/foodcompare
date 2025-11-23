@@ -5,15 +5,15 @@ import {
   fetchProductById,
   fetchPricesByProductId,
   fetchNutritionByProductId,
-  importNutritionFromOFF,
+  importNutritionFromOFF
 } from "../lib/api";
 import useCartStore from "../store/useCartStore";
-import useUIStore from "../store/useUIStore"; // 👈 NUEVO
+import { useI18n } from "../i18n/I18nContext";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const addToCart = useCartStore((s) => s.addItem);
-  const showToast = useUIStore((s) => s.showToast); // 👈 NUEVO
+  const { t, tFmt } = useI18n();
 
   const [product, setProduct] = useState(null);
   const [prices, setPrices] = useState([]);
@@ -24,7 +24,6 @@ export default function ProductDetail() {
   const [loadingNutrition, setLoadingNutrition] = useState(false);
   const [nutritionError, setNutritionError] = useState("");
 
-  // Cargar producto + precios + nutrición
   useEffect(() => {
     async function load() {
       const p = await fetchProductById(id);
@@ -36,7 +35,6 @@ export default function ProductDetail() {
         setSelectedStoreId(pr[0].store_id);
       }
 
-      // Nutrición
       try {
         setLoadingNutrition(true);
         setNutritionError("");
@@ -45,18 +43,18 @@ export default function ProductDetail() {
       } catch (err) {
         console.error("Error cargando nutrición:", err);
         setNutrition(null);
-        setNutritionError("No se pudo cargar la información nutricional.");
+        setNutritionError(t("productDetail.nutritionLoading"));
       } finally {
         setLoadingNutrition(false);
       }
     }
     load();
-  }, [id]);
+  }, [id, t]);
 
   if (!product) {
     return (
       <div className="pt-32 text-center text-red-400">
-        Cargando producto...
+        {t("productDetail.loadingProduct")}
       </div>
     );
   }
@@ -78,11 +76,8 @@ export default function ProductDetail() {
       unit_price: selectedStore.price ?? 0,
       store_id: selectedStore.store_id,
       store_name: selectedStore.store_name,
-      store_logo: selectedStore.store_logo,
+      store_logo: selectedStore.store_logo
     });
-
-    // 👇 Toast de confirmación
-    showToast("Producto agregado al carrito ✅");
   }
 
   function handleQuantityChange(delta) {
@@ -118,54 +113,54 @@ export default function ProductDetail() {
         value:
           nutrition.calories_kcal_100g != null
             ? `${nutrition.calories_kcal_100g} kcal`
-            : "-",
+            : "-"
       },
       {
         label: "Proteínas",
         value:
           nutrition.protein_g_100g != null
             ? `${nutrition.protein_g_100g} g`
-            : "-",
+            : "-"
       },
       {
         label: "Grasas",
         value:
-          nutrition.fat_g_100g != null ? `${nutrition.fat_g_100g} g` : "-",
+          nutrition.fat_g_100g != null ? `${nutrition.fat_g_100g} g` : "-"
       },
       {
         label: "Carbohidratos",
         value:
           nutrition.carbs_g_100g != null
             ? `${nutrition.carbs_g_100g} g`
-            : "-",
+            : "-"
       },
       {
         label: "Azúcares",
         value:
           nutrition.sugar_g_100g != null
             ? `${nutrition.sugar_g_100g} g`
-            : "-",
+            : "-"
       },
       {
         label: "Fibra",
         value:
           nutrition.fiber_g_100g != null
             ? `${nutrition.fiber_g_100g} g`
-            : "-",
+            : "-"
       },
       {
         label: "Sal",
         value:
-          nutrition.salt_g_100g != null ? `${nutrition.salt_g_100g} g` : "-",
+          nutrition.salt_g_100g != null ? `${nutrition.salt_g_100g} g` : "-"
       },
       {
         label: "NutriScore",
-        value: nutrition.nutriscore_grade || "-",
+        value: nutrition.nutriscore_grade || "-"
       },
       {
         label: "NOVA",
-        value: nutrition.nova_group != null ? nutrition.nova_group : "-",
-      },
+        value: nutrition.nova_group != null ? nutrition.nova_group : "-"
+      }
     ];
 
     return rows.map((row) => (
@@ -192,14 +187,16 @@ export default function ProductDetail() {
         />
       </div>
 
-      {/* Columna central: título + botón + cantidad + tabla nutricional */}
+      {/* Columna central */}
       <div className="md:col-span-1 flex flex-col gap-4">
         <h1 className="text-3xl font-bold text-white">{product.name}</h1>
 
-        {/* Selector de cantidad + botón */}
+        {/* Cantidad + botón */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-slate-300 text-sm">Cantidad</span>
+            <span className="text-slate-300 text-sm">
+              {t("productDetail.quantity")}
+            </span>
             <div className="flex items-center gap-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1">
               <button
                 type="button"
@@ -226,20 +223,23 @@ export default function ProductDetail() {
             className="bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold px-6 py-2 rounded-lg"
           >
             {selectedStore
-              ? `Agregar desde ${selectedStore.store_name}`
-              : "Agregar al carrito"}
+              ? tFmt("productDetail.addFromStore", {
+                  store: selectedStore.store_name
+                })
+              : t("productDetail.addToCart")}
           </button>
         </div>
 
         <p className="text-slate-400 text-sm">
-          Tamaño: {product.size_value} {product.size_unit}
+          {t("productDetail.sizeLabel")}: {product.size_value}{" "}
+          {product.size_unit}
         </p>
 
-        {/* Card de información nutricional */}
+        {/* Card nutricional */}
         <div className="mt-4 bg-slate-900 border border-slate-700 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-semibold text-white">
-              Información nutricional (por 100 g/ml)
+              {t("productDetail.nutritionTitle")}
             </h2>
 
             <button
@@ -248,7 +248,9 @@ export default function ProductDetail() {
               className="text-xs px-3 py-1 rounded-lg border border-emerald-500 text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={loadingNutrition}
             >
-              {loadingNutrition ? "Actualizando..." : "Obtener desde OFF"}
+              {loadingNutrition
+                ? t("productDetail.nutritionUpdating")
+                : t("productDetail.nutritionFromOFF")}
             </button>
           </div>
 
@@ -258,14 +260,13 @@ export default function ProductDetail() {
 
           {loadingNutrition && !nutrition && (
             <p className="text-xs text-slate-400">
-              Cargando información nutricional...
+              {t("productDetail.nutritionLoading")}
             </p>
           )}
 
           {!loadingNutrition && !nutrition && !nutritionError && (
             <p className="text-xs text-slate-400">
-              Aún no tenemos información nutricional para este producto.
-              Puedes obtenerla desde OpenFoodFacts.
+              {t("productDetail.nutritionEmpty")}
             </p>
           )}
 
@@ -276,7 +277,7 @@ export default function ProductDetail() {
               {nutrition.allergens && (
                 <div className="mt-3">
                   <p className="text-[11px] text-slate-400 mb-1">
-                    Alérgenos:
+                    {t("productDetail.nutritionAllergens")}
                   </p>
                   <p className="text-[11px] text-slate-100">
                     {nutrition.allergens}
@@ -287,7 +288,7 @@ export default function ProductDetail() {
               {nutrition.ingredients && (
                 <div className="mt-3">
                   <p className="text-[11px] text-slate-400 mb-1">
-                    Ingredientes:
+                    {t("productDetail.nutritionIngredients")}
                   </p>
                   <p className="text-[11px] text-slate-100 line-clamp-3">
                     {nutrition.ingredients}
@@ -299,10 +300,10 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* Columna derecha: precios por supermercado */}
+      {/* Columna derecha: precios */}
       <div className="md:col-span-1 bg-slate-900 border border-slate-700 rounded-xl p-5 flex flex-col gap-4">
         <h2 className="text-xl font-semibold mb-3 text-white">
-          Precios por supermercado
+          {t("productDetail.pricesTitle")}
         </h2>
 
         {prices.length === 0 && (

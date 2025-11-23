@@ -1,38 +1,33 @@
 // client/src/components/Navbar.jsx
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import useCartStore from "../store/useCartStore";
 import useUIStore from "../store/useUIStore";
 import useAuthStore from "../store/useAuthStore";
+import { useI18n } from "../i18n/I18nContext";
 
 export default function Navbar() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [search, setSearch] = useState("");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const items = useCartStore((s) => s.items);
+
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
 
   const openCart = useUIStore((s) => s.openCart);
   const openChat = useUIStore((s) => s.openChat);
 
-  const totalItems = items.reduce((sum, it) => sum + (it.qty || 0), 0);
+  const { lang, setLang, t } = useI18n();
 
-  // Sincronizar input con ?q=
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    setSearch(params.get("q") || "");
-  }, [location.search]);
+  const totalItems = items.reduce((sum, it) => sum + (it.qty || 0), 0);
 
   function handleSearchSubmit(e) {
     e.preventDefault();
-    const term = search.trim();
-    if (term) {
-      navigate(`/?q=${encodeURIComponent(term)}`);
-    } else {
-      navigate("/");
+    if (search.trim()) {
+      // futuro: navegar a /?q=...
+      console.log("Buscar:", search);
     }
   }
 
@@ -88,10 +83,26 @@ export default function Navbar() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar productos..."
+            placeholder={t("navbar.searchPlaceholder")}
             className="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-1.5 text-sm outline-none focus:border-emerald-400"
           />
         </form>
+
+        {/* Selector de idioma */}
+        <div className="hidden sm:flex items-center gap-1 text-xs text-slate-400">
+          {["es", "en", "pt"].map((code) => (
+            <button
+              key={code}
+              type="button"
+              onClick={() => setLang(code)}
+              className={`px-1.5 py-0.5 rounded ${
+                lang === code ? "bg-slate-800 text-emerald-400" : "hover:text-emerald-300"
+              }`}
+            >
+              {code.toUpperCase()}
+            </button>
+          ))}
+        </div>
 
         {/* Asistente IA */}
         <button
@@ -99,7 +110,7 @@ export default function Navbar() {
           onClick={openChat}
           className="hidden sm:inline-flex items-center gap-1 text-sm text-slate-200 hover:text-emerald-400"
         >
-          <span>Asistente</span>
+          <span>{t("navbar.assistant")}</span>
         </button>
 
         {/* Login / Usuario */}
@@ -109,7 +120,7 @@ export default function Navbar() {
             onClick={handleLoginClick}
             className="text-sm text-slate-200 hover:text-emerald-400"
           >
-            Iniciar sesión
+            {t("navbar.login")}
           </button>
         )}
 
@@ -145,14 +156,14 @@ export default function Navbar() {
                   onClick={handleGoProfile}
                   className="w-full text-left px-3 py-2 hover:bg-slate-800 text-slate-100"
                 >
-                  Perfil
+                  {t("navbar.profile")}
                 </button>
                 <button
                   type="button"
                   onClick={handleLogout}
                   className="w-full text-left px-3 py-2 hover:bg-slate-800 text-red-300"
                 >
-                  Cerrar sesión
+                  {t("navbar.logout")}
                 </button>
               </div>
             )}
@@ -165,7 +176,7 @@ export default function Navbar() {
           onClick={openCart}
           className="relative flex items-center gap-1 text-sm text-slate-200 hover:text-emerald-400"
         >
-          <span>Carrito</span>
+          <span>{t("navbar.cart")}</span>
           {totalItems > 0 && (
             <span className="ml-1 rounded-full bg-emerald-500 text-slate-900 px-1.5 text-xs font-semibold">
               {totalItems}

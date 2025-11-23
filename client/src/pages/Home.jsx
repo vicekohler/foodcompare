@@ -3,9 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { fetchProducts } from "../lib/api";
 import ProductCard from "../components/ProductCard";
+import { useI18n } from "../i18n/I18nContext";
 
 export default function Home() {
   const location = useLocation();
+  const { t, tFmt } = useI18n();
 
   const [allProducts, setAllProducts] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -35,9 +37,7 @@ export default function Home() {
       } catch (e) {
         console.error("Error en Home al cargar productos:", e);
         if (!cancelled) {
-          setError(
-            "No se pudieron cargar los productos. Revisa que el servidor esté arriba."
-          );
+          setError(t("home.errorLoading"));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -48,7 +48,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   // Categorías únicas desde los productos
   const categories = useMemo(() => {
@@ -84,14 +84,18 @@ export default function Home() {
     setFiltered(data);
   }, [allProducts, searchTerm, selectedCategory]);
 
+  // Título dinámico con i18n
   const title =
     searchTerm && selectedCategory !== "all"
-      ? `Resultados para "${searchTerm}" en ${selectedCategory}`
+      ? tFmt("home.title.searchInCategory", {
+          term: searchTerm,
+          category: selectedCategory
+        })
       : searchTerm
-      ? `Resultados para "${searchTerm}"`
+      ? tFmt("home.title.search", { term: searchTerm })
       : selectedCategory !== "all"
-      ? `Categoría: ${selectedCategory}`
-      : "Lo mejor de la semana (dataset demo)";
+      ? tFmt("home.title.category", { category: selectedCategory })
+      : t("home.title.base");
 
   return (
     <div className="max-w-7xl mx-auto pt-24 px-4">
@@ -109,7 +113,7 @@ export default function Home() {
                 : "bg-slate-900 text-slate-200 border-slate-700 hover:border-emerald-400"
             }`}
           >
-            Todas
+            {t("home.categoryAll")}
           </button>
 
           {categories.map((cat) => (
@@ -130,15 +134,13 @@ export default function Home() {
       )}
 
       {loading && (
-        <p className="text-slate-400 text-sm">Cargando productos...</p>
+        <p className="text-slate-400 text-sm">{t("home.loading")}</p>
       )}
 
       {error && <p className="text-red-400 mb-4">{error}</p>}
 
       {!loading && !error && filtered.length === 0 && (
-        <p className="text-slate-400">
-          No encontramos productos para estos filtros.
-        </p>
+        <p className="text-slate-400">{t("home.noResults")}</p>
       )}
 
       {!loading && !error && filtered.length > 0 && (
