@@ -1,334 +1,254 @@
 # 🛒 FoodCompare CL  
 ### Plataforma web para comparar precios, nutrición y sustitutos inteligentes  
-**Proyecto del ramo Diseño de Software – UAI, 2025**  
+**Proyecto – Diseño de Software – Universidad Adolfo Ibáñez, 2025**
 
-## Integrantes
+## 👥 Integrantes  
+- **Fernando Guaita**  
+- **Guillermo Hidalgo**  
+- **Vicente Köhler**
 
-- Fernando Guaita
-- Guillermo Hidalgo
-- Vicente Kohler
-
----
-
-## 📑 Índice
-1. [Descripción general](#descripción-general)
-2. [Objetivos del proyecto](#objetivos-del-proyecto)
-3. [Características principales](#características-principales)
-4. [Stack tecnológico](#stack-tecnológico)
-5. [Arquitectura del sistema](#arquitectura-del-sistema)
-6. [Base de datos (Supabase)](#base-de-datos-supabase)
-7. [API Backend (Node + Express)](#api-backend)
-8. [Frontend (React + Vite)](#frontend)
-9. [Integración con IA (Gemini)](#integración-ia)
-10. [Flujos completos del sistema](#flujos-del-sistema)
-11. [Problemas conocidos](#problemas-conocidos)
-12. [Deployment: Render + Vercel](#deployment)
-13. [Variables de entorno](#variables-de-entorno)
-14. [Pruebas sugeridas](#pruebas-sugeridas)
-15. [Cómo ejecutar localmente](#cómo-ejecutar-localmente)
-
----
+## 📑 Índice  
+1. Descripción general  
+2. Objetivos del proyecto  
+3. Características principales  
+4. Stack tecnológico  
+5. Arquitectura del sistema  
+6. Base de datos (Supabase)  
+7. API Backend (Node + Express)  
+8. Frontend (React + Vite)  
+9. Integración con IA (Gemini)  
+10. Flujos del sistema  
+11. Problemas conocidos  
+12. Deployment  
+13. Variables de entorno  
+14. Pruebas sugeridas  
+15. Ejecución local  
 
 ## 🧩 Descripción general
 
-**FoodCompare CL** es una plataforma web que permite:
+**FoodCompare CL** es una plataforma web que permite comparar precios de alimentos entre supermercados chilenos, revisar su información nutricional y obtener recomendaciones saludables mediante **Gemini IA**.  
+Incluye autenticación completa, login con Google, carrito inteligente, i18n y consultas a múltiples APIs.
 
-- Comparar precios entre **Lider, Tottus, Unimarc, Jumbo y Santa Isabel**.
-- Ver nutrición completa de cada producto.
-- Obtener sustitutos más saludables mediante **Gemini IA**.
-- Revisar el ahorro total entre supermercados.
-- Iniciar sesión con cuenta propia o Google.
-- Usar la app en **3 idiomas**: Español, Inglés y Portugués.
+La plataforma funciona en:
+
+🌐 **Frontend:** https://foodcompare.vercel.app
+
+🛠️ **Backend API:** https://foodcompare-api.onrender.com 
 
 ---
 
 ## 🎯 Objetivos del proyecto
-
-- Resolver un problema real: *¿Dónde conviene comprar mis productos?*
-- Crear un sistema web completo con frontend, backend y base de datos.
-- Integrar IA para recomendaciones nutricionales.
-- Implementar APIs externas:
-  - Supabase
-  - OpenFoodFacts
-  - Google OAuth
-  - Gemini AI
-- Cumplir todos los requerimientos del curso:
-  - Multilenguaje  
-  - CRUD  
-  - Hosting  
-  - Autenticación + SSO  
-  - API IA con token  
-  - API externa  
-  - Responsive design  
-  - Estructura profesional del repositorio  
+- Resolver el problema real de comparación de precios en supermercados.  
+- Aplicar arquitectura full‑stack moderna.  
+- Integrar autenticación Google OAuth + JWT.  
+- Implementar IA con Gemini.  
+- Desplegar frontend en Vercel y backend en Render.  
 
 ---
 
 ## 💡 Características principales
-
-### ✔️ Comparación de precios  
-Comparación automática entre los principales supermercados chilenos.
-
-### ✔️ Carrito inteligente  
-- Agrega productos  
-- Ve total por supermercado  
-- Calcula ahorro  
-- Destaca la combinación más económica  
-
-### ✔️ Nutrición  
-- Busca en Supabase  
-- Si no existe, llama a **OpenFoodFacts** y guarda los datos  
-
-### ✔️ IA con Gemini  
-- Sustitutos saludables  
-- Resumen nutricional  
-- Chatbot para consultas de alimentación  
-- Traducción automática al idioma del usuario  
-
-### ✔️ Multilenguaje  
-Toda la interfaz está en:
-- 🇪🇸 Español  
-- 🇺🇸 Inglés  
-- 🇧🇷 Portugués  
-
-### ✔️ Perfil de usuario  
-- Registro  
-- Login  
-- **Google SSO**  
-- Editar datos  
-- Avatar  
-- Sesión persistente  
+- Comparación de precios entre supermercados.  
+- Carrito inteligente.  
+- Información nutricional + fetch desde OpenFoodFacts.  
+- Recomendaciones saludables con IA.  
+- Autenticación local y con Google.  
+- Perfil de usuario y avatares.  
+- Multilenguaje (ES/EN/PT).  
 
 ---
 
 ## 🏗️ Stack tecnológico
 
 ### **Frontend**
-- React 18  
-- Vite  
+- React + Vite  
 - Zustand  
 - TailwindCSS  
-- i18n  
-- Vercel  
+- React Router  
+- Supabase JS Client  
 
 ### **Backend**
-- Node.js + Express  
-- Supabase Client  
+- Node.js  
+- Express  
+- JWT  
+- Supabase  
+- Morgan  
+- CORS  
 - Gemini AI SDK  
-- Multer  
-- Render  
 
-### **Base de datos**
-- Supabase PostgreSQL  
-- Storage para avatares  
-- RLS / Policies  
+### **Base de Datos**
+- **Supabase (PostgreSQL + Storage)**  
 
 ---
 
 ## 🗂️ Arquitectura del sistema
 
-┌──────────────────┐ ┌──────────────────────────┐
-│ FRONTEND │ │ BACKEND │
-│ React + Vite │<──────>│ Node + Express │
-│ Vercel │ │ Render │
-└──────────────────┘ └──────────────────────────┘
-│ │
-▼ ▼
-i18n multilenguaje Supabase (DB + Auth)
-OpenFoodFacts API
-Gemini AI API
+```
+                       ARQUITECTURA GENERAL
+
+                   ┌────────────────────────────┐
+                   │          FRONTEND          │
+                   │   React + Vite (Vercel)    │
+                   │   i18n multilenguaje       │
+                   └───────────────┬────────────┘
+                                   │  HTTPS /api/*
+                                   ▼
+                   ┌────────────────────────────┐
+                   │           BACKEND          │
+                   │   Node.js + Express        │
+                   │   Web Service (Render)     │
+                   └───────────────┬────────────┘
+                                   │
+                     ┌─────────────┴─────────────────────┐
+                     │                                   │
+                     ▼                                   ▼
+        ┌────────────────────────────┐      ┌────────────────────────────┐
+        │   Supabase (DB + Auth)     │      │     OpenFoodFacts API      │
+        │   · PostgreSQL             │      │  Datos de productos y      │
+        │   · Auth email + Google    │      │  nutrición externos        │
+        └───────────────┬────────────┘      └────────────────────────────┘
+                        │
+                        ▼
+        ┌────────────────────────────┐
+        │       Gemini IA API        │
+        │  Sugerencias y consejos    │
+        │  nutricionales (IA)        │
+        └────────────────────────────┘
 
 
----
 
-## 🗃️ Base de datos (Supabase)
-
-### **Tablas principales**
-- **products** — catálogo completo  
-- **prices** — precios por supermercado  
-- **stores** — supermercados chilenos  
-- **nutrition** — nutrición manual u obtenida desde OFF  
-- **users** — información del usuario  
-- **carts** — carritos  
-- **cart_items** — productos en carritos  
-- **orders / order_items** — estructura para compras simuladas  
-- **store_products** — relación producto/supermercado  
-
-Estructura visual basada en tus imágenes exportadas de Supabase.
 
 ---
 
 ## 🧪 API Backend
 
-### **Productos**
+### Rutas principales:
+```
+/api/products
+/api/prices
+/api/auth
+/api/upload
+/api/ai
+```
 
-- GET /api/products
-- GET /api/products?limit=200
-- GET /api/products/search?q=
-- GET /api/products/:id/nutrition
-- GET /api/products/detail/:id
-
-
-### **Precios**
-
-- GET /api/prices/by-product/:id
-- POST /api/prices/quote
-
-
-### **IA (Gemini)**
-
-- GET /api/ai/substitutes/:productId
-- POST /api/ai/nutrition-advice
-- POST /api/ai/chat
-
-
-### **Auth**
-
-- POST /api/auth/signup
-- POST /api/auth/login
-- GET /api/auth/me
-- PUT /api/auth/me
-
-
-### **Uploads**
-
-- POST /api/upload/avatar
-
+Incluye:
+- CRUD de productos.  
+- Comparación de precios.  
+- Autenticación local y OAuth.  
+- Sistema de carrito inteligente.  
+- Integración con IA.  
 
 ---
 
 ## 🎨 Frontend
 
-### **Páginas**
+### Páginas:
+- Login  
+- Signup  
+- AuthCallback  
 - Home  
 - Detalle de producto  
 - Carrito  
-- Ahorro  
-- Login / Signup  
 - Perfil  
-- Chatbot  
+- Chat IA  
+- Sugerencias saludables  
 
-### **Componentes clave**
-- ProductCard  
-- PriceComparison  
-- NutritionSection  
-- SubstitutesIA  
-- Navbar con idioma  
-- CartPanel  
+### Funcionalidades destacadas
+- Manejo global de estado con Zustand  
+- Vistas responsivas con Tailwind  
+- Chat nutricional integrado  
 
 ---
 
-## 🤖 Integración IA (Gemini)
+## 🤖 IA con Gemini
 
-Gemini se usa en tres funciones principales:
+La aplicación utiliza **Google Gemini 1.5 Flash** para:
+- Sugerir sustitutos más saludables.  
+- Entregar análisis nutricional detallado.  
+- Asistir a usuarios mediante chat contextual.  
 
-### **1. Sustitutos inteligentes**
-Analiza el producto y su nutrición, luego recomienda alternativas más saludables.
+---
 
-### **2. Consejos nutricionales**
-Genera un resumen en lenguaje natural, destacando:
-- calorías  
-- azúcares  
-- grasas  
-- advertencias  
-- mejoras posibles  
+## 🔁 Flujos del sistema
 
-### **3. Chatbot inteligente**
-Permite consultas como:
-- “¿Es sano este producto?”  
-- “¿Qué puedo comer si soy intolerante a la lactosa?”  
-- “Recomiéndame snacks saludables.”  
-
-Funciona en **es/en/pt** automáticamente.
+### Flujo principal:
+1. Usuario ingresa → login local o Google OAuth.  
+2. Explora productos y precios.  
+3. Visualiza nutrición y sugerencias IA.  
+4. Agrega productos al carrito.  
+5. Obtiene cotización inteligente.  
 
 ---
 
 ## 🛑 Problemas conocidos
-
-### ✔️ 1. OpenFoodFacts no siempre tiene nutrición  
-Algunos productos no tienen datos → la API devuelve vacío.
-
-### ✔️ 2. Los nombres de productos no están traducidos  
-La UI está traducida, pero los valores vienen desde Supabase en español.
-
+- OpenFoodFacts puede entregar información incompleta.  
+- Render puede demorar el cold start del backend.  
+- Dependencia de APIs externas para nutrición.  
 
 ---
 
 ## 🚀 Deployment
 
-### **Backend en Render**
-- Root: `/server`
-- Build: `npm install`
-- Start: `node src/server.js`
-- CORS configurado con:
+### **Frontend – Vercel**
+🔗 https://foodcompare-cl.vercel.app  
 
-- FRONTEND_ORIGIN = https://foodcompare-cl.vercel.app
-
-
-### **Frontend en Vercel**
-- Root: `/client`
-- Build: `npm run build`
-- Output: `/dist`
-- Variables:
-
-- VITE_API_URL = https://foodcompare-api.onrender.com
-
+### **Backend – Render**
+🔗 https://foodcompare-api.onrender.com  
 
 ---
 
 ## 🔐 Variables de entorno
 
-### **client/.env.example**
+### 📌 client/.env
+```
+VITE_API_URL=https://foodcompare-api.onrender.com
+VITE_SUPABASE_URL=TU_URL
+VITE_SUPABASE_ANON_KEY=TU_ANON_KEY
+```
 
-- VITE_API_URL = http://localhost:4000
-- VITE_SUPABASE_URL = TU_SUPABASE_URL
-- VITE_SUPABASE_ANON_KEY = TU_SUPABASE_ANON_KEY
-- VITE_APP_NAME = FoodCompare
-
-
-### **server/.env.example**
-
-- PORT = 4000
-- FRONTEND_ORIGIN = http://localhost:5173
-- SUPABASE_URL = TU_SUPABASE_URL
-- SUPABASE_SERVICE_KEY = TU_SUPABASE_SERVICE_ROLE_KEY
-- JWT_SECRET = CAMBIA_ESTO
-- GEMINI_API_KEY = TU_GEMINI_API_KEY
-- NODE_ENV = development
-
+### 📌 server/.env
+```
+PORT=4000
+FRONTEND_ORIGIN=https://foodcompare-cl.vercel.app
+SUPABASE_URL=TU_URL
+SUPABASE_SERVICE_KEY=TU_SERVICE_KEY
+JWT_SECRET=CLAVE_SECRETA
+GEMINI_API_KEY=TU_GEMINI_KEY
+NODE_ENV=production
+```
 
 ---
 
 ## 🧪 Pruebas sugeridas
-
-1. Registro  
-2. Login  
-3. Login con Google  
-4. Editar perfil  
-5. Subir avatar  
-6. Buscar productos  
-7. Ver detalle  
-8. Ver nutrición  
-9. Importar datos desde OFF  
-10. Precios por supermercado  
-11. Agregar al carrito  
-12. Ver ahorro  
-13. Usar sustitutos IA  
-14. Chatbot  
-15. Cambiar de idioma  
+- Signup y login local.  
+- Login con Google OAuth.  
+- Búsqueda de productos.  
+- Comparación de precios.  
+- Fetch nutricional desde OFF.  
+- Recomendaciones IA.  
+- Carrito inteligente.  
+- Cambio de idioma.  
+- Subida de avatar.  
 
 ---
 
-## 🖥️ Cómo ejecutar localmente
+## 🖥️ Ejecución local
 
-### **Backend**
-```bash
+### Backend
+```
 cd server
 npm install
 npm run dev
+```
 
-Frontend
-
+### Frontend
+```
 cd client
 npm install
 npm run dev
+```
+
+---
+
+## ✔️ Proyecto completo y funcional  
+La plataforma fue desarrollada para entregar una experiencia real, moderna y escalable, integrando múltiples tecnologías y flujo de datos consistente entre frontend, backend, Supabase y Gemini.
+
