@@ -1,6 +1,6 @@
 // src/components/ChatDrawer.jsx
 import { useState, useEffect, useRef } from "react";
-import useUiStore from "../store/useUiStore";
+import useUIStore from "../store/useUIStore";
 import { sendAiChatMessage } from "../lib/api";
 import { useI18n } from "../i18n/I18nContext";
 
