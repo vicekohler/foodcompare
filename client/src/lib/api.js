@@ -2,12 +2,13 @@
 
 // Siempre usamos la API con prefijo /api
 // En desarrollo: VITE_API_URL=http://localhost:4000
-// En producción: VITE_API_URL=https://tu-backend.onrender.com
+// En producción: VITE_API_URL=https://foodcompare-api.onrender.com  (SIN /api al final)
 const API_BASE =
   (import.meta.env && import.meta.env.VITE_API_URL) ||
   "http://localhost:4000";
 
-export const API_URL = `${API_BASE.replace(/\/$/, "")}/api`;
+// Normalizamos la base quitando cualquier / del final y añadimos /api una sola vez
+export const API_URL = `${API_BASE.replace(/\/+$/, "")}/api`;
 
 /**
  * Wrapper genérico que devuelve directamente el JSON (o null en error).
@@ -226,7 +227,8 @@ export async function fetchProfile(token) {
     const body = await res.json().catch(() => null);
 
     if (!res.ok) {
-      const errorMessage = body?.error || body?.message || `HTTP ${res.status}`;
+      const errorMessage =
+        body?.error || body?.message || `HTTP ${res.status}`;
       return { ok: false, status: res.status, error: errorMessage, data: null };
     }
 
@@ -258,7 +260,8 @@ export async function updateProfile(token, payload) {
     const body = await res.json().catch(() => null);
 
     if (!res.ok) {
-      const errorMessage = body?.error || body?.message || `HTTP ${res.status}`;
+      const errorMessage =
+        body?.error || body?.message || `HTTP ${res.status}`;
       return { ok: false, status: res.status, error: errorMessage, data: null };
     }
 
@@ -294,7 +297,8 @@ export async function uploadAvatar(token, file) {
     const body = await res.json().catch(() => null);
 
     if (!res.ok || !body?.url) {
-      const errorMessage = body?.error || body?.message || `HTTP ${res.status}`;
+      const errorMessage =
+        body?.error || body?.message || `HTTP ${res.status}`;
       return { ok: false, status: res.status, error: errorMessage, url: null };
     }
 
