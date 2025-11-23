@@ -8,10 +8,12 @@ import {
   importNutritionFromOFF,
 } from "../lib/api";
 import useCartStore from "../store/useCartStore";
+import useUIStore from "../store/useUIStore"; // 👈 NUEVO
 
 export default function ProductDetail() {
   const { id } = useParams();
   const addToCart = useCartStore((s) => s.addItem);
+  const showToast = useUIStore((s) => s.showToast); // 👈 NUEVO
 
   const [product, setProduct] = useState(null);
   const [prices, setPrices] = useState([]);
@@ -78,6 +80,9 @@ export default function ProductDetail() {
       store_name: selectedStore.store_name,
       store_logo: selectedStore.store_logo,
     });
+
+    // 👇 Toast de confirmación
+    showToast("Producto agregado al carrito ✅");
   }
 
   function handleQuantityChange(delta) {

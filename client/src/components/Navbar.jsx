@@ -1,22 +1,40 @@
 // client/src/components/Navbar.jsx
-import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import useCartStore from "../store/useCartStore";
 import useUIStore from "../store/useUIStore";
 import useAuthStore from "../store/useAuthStore";
-import SearchBar from "./SearchBar";
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [search, setSearch] = useState("");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const items = useCartStore((s) => s.items);
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+
   const openCart = useUIStore((s) => s.openCart);
   const openChat = useUIStore((s) => s.openChat);
 
   const totalItems = items.reduce((sum, it) => sum + (it.qty || 0), 0);
+
+  // Sincronizar input con ?q=
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    setSearch(params.get("q") || "");
+  }, [location.search]);
+
+  function handleSearchSubmit(e) {
+    e.preventDefault();
+    const term = search.trim();
+    if (term) {
+      navigate(`/?q=${encodeURIComponent(term)}`);
+    } else {
+      navigate("/");
+    }
+  }
 
   function handleLoginClick() {
     navigate("/login");
@@ -61,10 +79,19 @@ export default function Navbar() {
           <span className="text-lg">FoodCompare CL</span>
         </Link>
 
-        {/* Buscador con autocompletado */}
-        <div className="flex-1 flex items-center">
-          <SearchBar />
-        </div>
+        {/* Buscador */}
+        <form
+          onSubmit={handleSearchSubmit}
+          className="flex-1 flex items-center max-w-xl"
+        >
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar productos..."
+            className="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-1.5 text-sm outline-none focus:border-emerald-400"
+          />
+        </form>
 
         {/* Asistente IA */}
         <button

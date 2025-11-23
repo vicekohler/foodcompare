@@ -5,13 +5,14 @@ import { useEffect, useRef } from "react";
 import Navbar from "./components/Navbar";
 import CartDrawer from "./components/CartDrawer";
 import ChatDrawer from "./components/ChatDrawer";
+import Toast from "./components/Toast"; // 👈 NUEVO
 
 import Home from "./pages/Home";
 import ProductDetail from "./pages/ProductDetail";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
-import AuthCallback from "./pages/AuthCallback"; // ⬅️ IMPORT NUEVO
+import AuthCallback from "./pages/AuthCallback";
 
 import useAuthStore from "./store/useAuthStore";
 import useCartStore from "./store/useCartStore";
@@ -88,6 +89,7 @@ export default function App() {
         <Navbar />
         <CartDrawer />
         <ChatDrawer />
+        <Toast /> {/* 👈 Toast global */}
 
         <main className="pt-20">
           <Routes>
@@ -96,7 +98,7 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/auth/callback" element={<AuthCallback />} /> {/* ⬅️ RUTA NUEVA */}
+            <Route path="/auth/callback" element={<AuthCallback />} />
           </Routes>
         </main>
       </div>
