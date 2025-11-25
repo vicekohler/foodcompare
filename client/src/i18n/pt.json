@@ -12,7 +12,7 @@
   },
   "home": {
     "title": {
-      "base": "O melhor da semana (dataset demo)",
+      "base": "O melhor da semana",
       "search": "Resultados para \"{{term}}\"",
       "searchInCategory": "Resultados para \"{{term}}\" em {{category}}",
       "category": "Categoria: {{category}}"
